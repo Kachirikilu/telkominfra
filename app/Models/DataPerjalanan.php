@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class PerjalananData extends Model
+class DataPerjalanan extends Model
 {
     use HasFactory;
 
@@ -18,7 +18,7 @@ class PerjalananData extends Model
      */
     public $timestamps = false; 
     
-    protected $table = 'perjalanan_datas';
+    protected $table = 'data_perjalanans';
 
     /**
      * Atribut yang dapat diisi secara massal.

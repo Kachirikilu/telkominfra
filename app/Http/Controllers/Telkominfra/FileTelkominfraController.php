@@ -7,10 +7,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use App\Models\Perjalanan;
-use App\Models\PerjalananData;
+use App\Models\DataPerjalanan;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\File; 
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\LazyCollection; 
 
 class FileTelkominfraController extends Controller
 {
@@ -140,230 +141,464 @@ class FileTelkominfraController extends Controller
     }
 
 
-    public function parseNmfSinyal(string $nmfPath, int $perjalananId): array
-    {
-        $dataSinyal = [];
-        $currentGps = [
-            'lat' => null,
-            'lon' => null,
-        ]; 
-        $lineCount = 0;
-        $logDate = null; 
+    // public function parseNmfSinyal(string $nmfPath, int $perjalananId): array
+    // {
+    //     $dataSinyal = [];
+    //     $currentGps = [
+    //         'lat' => null,
+    //         'lon' => null,
+    //     ]; 
+    //     $lineCount = 0;
+    //     $logDate = null; 
         
-        $delimiter = ','; 
+    //     $delimiter = ','; 
 
-        $convertTime = function (?string $rawTime, ?string $logDate): ?string {
-             if (!$rawTime || !$logDate) return null;
-             try {
-                $dateTimeString = $logDate . ' ' . $rawTime;
-                return Carbon::createFromFormat('Y-m-d H:i:s.v', $dateTimeString)->format('Y-m-d H:i:s');
-             } catch (\Exception $e) {
-                 return null;
-             }
-        };
+    //     $convertTime = function (?string $rawTime, ?string $logDate): ?string {
+    //          if (!$rawTime || !$logDate) return null;
+    //          try {
+    //             $dateTimeString = $logDate . ' ' . $rawTime;
+    //             return Carbon::createFromFormat('Y-m-d H:i:s.v', $dateTimeString)->format('Y-m-d H:i:s');
+    //          } catch (\Exception $e) {
+    //              return null;
+    //          }
+    //     };
 
-        $resolveBandFrequency = function (?int $earfcn) {
-            $band = null;
-            $frekuensi = null;
-            $bandwidth = null;
-            $n_value = null;
+    //     $resolveBandFrequency = function (?int $earfcn) {
+    //         $band = null;
+    //         $frekuensi = null;
+    //         $bandwidth = null;
+    //         $n_value = null;
 
-            $bandwidth_mapping = [
-                40 => 20, // Band 40 (2300 MHz)
-                3  => 20, // Band 3 (1800 MHz)
-                1  => 10, // Band 1 (2100 MHz)
-                8  => 10, // Band 8 (900 MHz)
-                42 => 20, // Band 42 (3500 MHz)
-                10 => 10, // Band 10 (2100 MHz)
-                13 => 10, // Band 13 (700 MHz)
+    //         $bandwidth_mapping = [
+    //             40 => 20, // Band 40 (2300 MHz)
+    //             3  => 20, // Band 3 (1800 MHz)
+    //             1  => 10, // Band 1 (2100 MHz)
+    //             8  => 10, // Band 8 (900 MHz)
+    //             42 => 20, // Band 42 (3500 MHz)
+    //             10 => 10, // Band 10 (2100 MHz)
+    //             13 => 10, // Band 13 (700 MHz)
+    //         ];
+
+    //         if ($earfcn !== null) {
+    //             switch ($earfcn) {
+    //                 case 39092:
+    //                 case 38750:
+    //                 case 38894:
+    //                 case 38948: $band = 40; $frekuensi = 2300; break;
+    //                 case 1850: $band = 3;  $frekuensi = 1800; break;
+    //                 case 225:
+    //                 case 251:
+    //                 case 500: $band = 1;  $frekuensi = 2100; break;
+    //                 case 3500: $band = 8;  $frekuensi = 900;  break;
+    //                     break; 
+
+    //                 default:
+    //                     // if ($earfcn >= 41590 && $earfcn <= 43589) {
+    //                     //     $band = 42;
+    //                     //     $frekuensi = 3500;
+    //                     // } elseif ($earfcn >= 0 && $earfcn <= 599) {
+    //                     //     $band = 13;
+    //                     //     $frekuensi = 700;
+    //                     // } else {
+    //                         $band = null;
+    //                         $frekuensi = null;
+    //                     // }
+    //                     break;
+    //             }
+
+    //             if (is_int($band) && isset($bandwidth_mapping[$band])) {
+    //                 $bandwidth = $bandwidth_mapping[$band];
+    //                 $n_value = $bandwidth * 5; 
+    //             } else {
+    //                 $bandwidth = null;
+    //                 $n_value = null;
+    //             }
+    //             // ----------------------------------------------
+    //         }
+
+    //         return [
+    //             'band' => $band, 
+    //             'frekuensi' => $frekuensi, 
+    //             'bandwidth' => $bandwidth, 
+    //             'n_value' => $n_value
+    //         ];
+    //     };
+
+    //     if (($handle = fopen($nmfPath, "r")) !== FALSE) {
+    //         while (($line = fgets($handle)) !== FALSE) {
+    //             $lineCount++;
+    //             $line = trim($line);
+
+    //             if ($line === '' || str_starts_with($line, '#')) {
+    //                 if (str_starts_with($line, '#START')) {
+    //                     $parts = str_getcsv($line, $delimiter); 
+    //                     $rawDate = $parts[3] ?? null; 
+    //                     if ($rawDate) {
+    //                         try {
+    //                             $dateString = trim($rawDate, '"');
+    //                             $logDate = Carbon::createFromFormat('d.m.Y', $dateString)->format('Y-m-d');
+    //                         } catch (\Exception $e) {
+    //                             $logDate = Carbon::now()->format('Y-m-d'); 
+    //                         }
+    //                     }
+    //                 }
+    //                 continue;
+    //             }
+
+    //             if (!$logDate) {
+    //                 $logDate = Carbon::now()->format('Y-m-d'); 
+    //             }
+
+    //             $parts = str_getcsv($line, $delimiter); 
+
+    //             if (str_starts_with($line, 'GPS')) {
+    //                 if (isset($parts[3]) && isset($parts[4]) && $parts[3] !== '' && $parts[4] !== '') {
+    //                     $currentGps['lat'] = (float)$parts[4];
+    //                     $currentGps['lon'] = (float)$parts[3];
+    //                 } else {
+    //                     $currentGps['lat'] = null;
+    //                     $currentGps['lon'] = null;
+    //                 }
+                    
+    //                 continue; 
+    //             }
+
+    //             if (str_starts_with($line, 'CHI')) {
+    //                 $n_value_chi = $parts[6] ?? null;
+    //                 $bandwidth_chi = $n_value_chi / 5;
+    //                 $cell_chi = $parts[9] ?? null;
+    //                 continue;
+    //             }
+                
+    //             if (str_starts_with($line, 'CELLMEAS')) {
+    //                 $cellmeasBuffer = [
+    //                     'time'      => $parts[1] ?? null,
+    //                     'lat'       => $currentGps['lat'] ?? null,
+    //                     'lon'       => $currentGps['lon'] ?? null,
+    //                     'pci'       => $parts[10] ?? null,
+    //                     'earfcn'    => $parts[9] ?? null,
+    //                     'rsrp'      => $parts[12] ?? null,
+    //                     'rssi'      => $parts[11] ?? null,
+    //                     'rsrq'      => $parts[13] ?? null,
+    //                     // 'sinr'      => $parts[17] ?? null,
+    //                     'sinr'      => $parts[14] ?? null,
+    //                 ];
+    //                 $cellmeasBuffer['timestamp'] = $convertTime($cellmeasBuffer['time'], $logDate);
+    //                 continue;
+    //             }
+
+
+    //             if (str_starts_with($line, 'MIMOMEAS')) {
+    //                 try {
+    //                     $rawTime = $parts[1] ?? ($cellmeasBuffer['time'] ?? null);
+
+    //                     $earfcn = (int)($parts[8] ?? ($cellmeasBuffer['earfcn'] ?? null));
+    //                     if ($earfcn == 0 || $earfcn == 432000 || $earfcn == 467000) {
+    //                         continue;
+    //                     }
+
+    //                     $lat     = $currentGps['lat'] ?? ($cellmeasBuffer['lat'] ?? null);
+    //                     $lon     = $currentGps['lon'] ?? ($cellmeasBuffer['lon'] ?? null);
+    //                     $timestampWaktu = $convertTime($rawTime, $logDate) ?? ($cellmeasBuffer['timestamp'] ?? null);
+
+    //                     if ($lat === null || $lon === null) {
+    //                         Log::warning("MIMOMEAS baris $lineCount tidak memiliki koordinat dari GPS sebelumnya.");
+    //                     }
+
+    //                     $pci    = $parts[9] ?? ($cellmeasBuffer['pci'] ?? 'Unknown');
+
+    //                     $bandFreq  = $resolveBandFrequency($earfcn);
+    //                     $nValue    = $n_value_chi ?? $bandFreq['n_value'];
+    //                     $bandwidth = $bandwidth_chi ?? $bandFreq['bandwidth'];
+
+    //                     // $rawRsrp = (float)($parts[14] ?? -120);
+    //                     // $rsrpValue = $rawRsrp >= 0 ? -120 : $rawRsrp;
+    //                     $rawRsrp = (float)($cellmeasBuffer['rsrp']);
+    //                     $rsrpValue = $rawRsrp;
+
+    //                     // $rawRssi = (float)($parts[12] ?? -120);
+    //                     $rawRssi = (float)($cellmeasBuffer['rssi']);
+
+    //                     // $rawRsrq = (float)($parts[13] ?? -20);
+    //                     // $rsrqValue = $rawRsrq >= 0 ? -20.0 : $rawRsrq;
+    //                     $rawRsrq =  (float)($cellmeasBuffer['rsrq']);
+    //                     $rsrqValue = $rawRsrq;
+
+    //                     // $rawSinr = (float)($parts[11] ?? null);
+    //                     $rawSinr = (float)($cellmeasBuffer['sinr']);
+    //                     $sinrValue = $rawSinr;
+
+    //                     if ($rawSinr == null) {
+
+    //                         $rsrp_mW = pow(10, ($rawRsrp / 10));
+    //                         $rssi_mW = pow(10, ($rawRssi / 10));
+
+    //                         if ($nValue <= 0) {
+    //                             $nValue = 100;
+    //                         }
+                            
+    //                         $signal_total_mW = $rsrp_mW * 12 * $nValue;
+    //                         $interference_noise_mW = $rssi_mW - $signal_total_mW;
+ 
+    //                         if ($interference_noise_mW <= 0) {
+    //                             $sinrValue = 30.0; 
+    //                         } else {
+    //                             // if ($interference_noise_mW < 0) {
+    //                             //     $interference_noise_mW = -$interference_noise_mW; 
+    //                             // }
+    //                             $interference_noise_per_re_mW = $interference_noise_mW / (12 * $nValue);
+    //                             $sinr_linear = $rsrp_mW / $interference_noise_per_re_mW;
+    //                             $sinr_dB = 10 * log10($sinr_linear);
+    //                             $sinrValue = max(-30.0, min($sinr_dB, 30.0));
+    //                         }
+    //                     } else {
+    //                         $sinrValue = $rawSinr;
+    //                     }
+
+    //                     $dataSinyal[] = [
+    //                         'perjalanan_id'     => $perjalananId,
+    //                         'timestamp_waktu'   => $timestampWaktu,
+    //                         'cell_id'           => $cell_chi ?? 0,
+    //                         'pci'               => $pci ?? 0, 
+    //                         'earfcn'            => $earfcn ?? 0,
+    //                         'band'              => $bandFreq['band'],
+    //                         'frekuensi'         => $bandFreq['frekuensi'],
+    //                         'bandwidth'         => $bandwidth,
+    //                         'n_value'           => $nValue,
+    //                         'rsrp'              => $rsrpValue,
+    //                         'rssi'              => $rawRssi, 
+    //                         'rsrq'              => $rsrqValue, 
+    //                         'sinr'              => $sinrValue,
+    //                         'latitude'          => $lat, 
+    //                         'longitude'         => $lon, 
+    //                     ];
+    //                 } catch (\Exception $e) {
+    //                     Log::warning("Gagal parsing baris MIMOMEAS ke-$lineCount: " . $e->getMessage());
+    //                 }
+    //             }
+    //         }
+
+    //         fclose($handle);
+    //     }
+    //     return $dataSinyal;
+    // }
+
+    public function parseNmfSinyal(string $nmfPath, int $perjalananId): LazyCollection
+    {
+        return LazyCollection::make(function () use ($nmfPath, $perjalananId) {
+            $currentGps = [
+                'lat' => null,
+                'lon' => null,
             ];
+            $lineCount = 0;
+            $logDate = null;
+            $delimiter = ',';
 
-            if ($earfcn !== null) {
-                switch ($earfcn) {
-                    case 39092:
-                    case 38750:
-                    case 38948: $band = 40; $frekuensi = 2300; break;
-                    case 1850: $band = 3;  $frekuensi = 1800; break;
-                    case 225:
-                    case 251:
-                    case 500: $band = 1;  $frekuensi = 2100; break;
-                    case 3500: $band = 8;  $frekuensi = 900;  break;
-                        break; 
+            $convertTime = function (?string $rawTime, ?string $logDate): ?string {
+                if (!$rawTime || !$logDate) return null;
+                try {
+                    $dateTimeString = $logDate . ' ' . $rawTime;
+                    return Carbon::createFromFormat('Y-m-d H:i:s.v', $dateTimeString)->format('Y-m-d H:i:s');
+                } catch (\Exception $e) {
+                    return null;
+                }
+            };
 
-                    default:
-                        // if ($earfcn >= 41590 && $earfcn <= 43589) {
-                        //     $band = 42;
-                        //     $frekuensi = 3500;
-                        // } elseif ($earfcn >= 0 && $earfcn <= 599) {
-                        //     $band = 13;
-                        //     $frekuensi = 700;
-                        // } else {
+            $resolveBandFrequency = function (?int $earfcn) {
+                $band = null;
+                $frekuensi = null;
+                $bandwidth = null;
+                $n_value = null;
+
+                $bandwidth_mapping = [
+                    40 => 20,
+                    3  => 20,
+                    1  => 10,
+                    8  => 10,
+                    42 => 20,
+                    10 => 10,
+                    13 => 10,
+                ];
+
+                if ($earfcn !== null) {
+                    switch ($earfcn) {
+                        case 39092:
+                        case 38750:
+                        case 38894:
+                        case 38948: $band = 40; $frekuensi = 2300; break;
+                        case 1850: $band = 3;  $frekuensi = 1800; break;
+                        case 225:
+                        case 251:
+                        case 500: $band = 1;  $frekuensi = 2100; break;
+                        case 3500: $band = 8;  $frekuensi = 900;  break;
+                        default:
                             $band = null;
                             $frekuensi = null;
-                        // }
-                        break;
-                }
-
-                if (is_int($band) && isset($bandwidth_mapping[$band])) {
-                    $bandwidth = $bandwidth_mapping[$band];
-                    $n_value = $bandwidth * 5; 
-                } else {
-                    $bandwidth = null;
-                    $n_value = null;
-                }
-                // ----------------------------------------------
-            }
-
-            return [
-                'band' => $band, 
-                'frekuensi' => $frekuensi, 
-                'bandwidth' => $bandwidth, 
-                'n_value' => $n_value
-            ];
-        };
-
-        if (($handle = fopen($nmfPath, "r")) !== FALSE) {
-            while (($line = fgets($handle)) !== FALSE) {
-                $lineCount++;
-                $line = trim($line);
-
-                if ($line === '' || str_starts_with($line, '#')) {
-                    if (str_starts_with($line, '#START')) {
-                        $parts = str_getcsv($line, $delimiter); 
-                        $rawDate = $parts[3] ?? null; 
-                        if ($rawDate) {
-                            try {
-                                $dateString = trim($rawDate, '"');
-                                $logDate = Carbon::createFromFormat('d.m.Y', $dateString)->format('Y-m-d');
-                            } catch (\Exception $e) {
-                                $logDate = Carbon::now()->format('Y-m-d'); 
-                            }
-                        }
+                            break;
                     }
-                    continue;
-                }
 
-                if (!$logDate) {
-                    $logDate = Carbon::now()->format('Y-m-d'); 
-                }
-
-                $parts = str_getcsv($line, $delimiter); 
-
-                if (str_starts_with($line, 'GPS')) {
-                    if (isset($parts[3]) && isset($parts[4]) && $parts[3] !== '' && $parts[4] !== '') {
-                        $currentGps['lat'] = (float)$parts[4];
-                        $currentGps['lon'] = (float)$parts[3];
-                    } else {
-                        $currentGps['lat'] = null;
-                        $currentGps['lon'] = null;
+                    if (is_int($band) && isset($bandwidth_mapping[$band])) {
+                        $bandwidth = $bandwidth_mapping[$band];
+                        $n_value = $bandwidth * 5;
                     }
-                    
-                    continue; 
                 }
 
-                if (str_starts_with($line, 'CHI')) {
-                    $n_value_chi = $parts[6] ?? null;
-                    $bandwidth_chi = $n_value_chi / 5;
-                    $cell_chi = $parts[9] ?? null;
-                    continue;
-                }
-                
-                if (str_starts_with($line, 'CELLMEAS')) {
-                    $cellmeasBuffer = [
-                        'time'      => $parts[1] ?? null,
-                        'lat'       => $currentGps['lat'] ?? null,
-                        'lon'       => $currentGps['lon'] ?? null,
-                        'pci'       => $parts[10] ?? null,
-                        'earfcn'    => $parts[9] ?? null,
-                    ];
-                    $cellmeasBuffer['timestamp'] = $convertTime($cellmeasBuffer['time'], $logDate);
-                    continue;
-                }
+                return [
+                    'band' => $band,
+                    'frekuensi' => $frekuensi,
+                    'bandwidth' => $bandwidth,
+                    'n_value' => $n_value,
+                ];
+            };
 
+            if (($handle = fopen($nmfPath, "r")) !== false) {
+                $cellmeasBuffer = [];
+                $cell_chi = null;
+                $bandwidth_chi = null;
+                $n_value_chi = null;
 
-                if (str_starts_with($line, 'MIMOMEAS')) {
-                    try {
-                        $rawTime = $parts[1] ?? ($cellmeasBuffer['time'] ?? null);
+                while (($line = fgets($handle)) !== false) {
+                    $lineCount++;
+                    $line = trim($line);
 
-                        $earfcn = (int)($parts[8] ?? ($cellmeasBuffer['earfcn'] ?? null));
-                        if ($earfcn == 0 || $earfcn == 432000 || $earfcn == 467000) {
-                            continue;
-                        }
-
-                        $lat     = $currentGps['lat'] ?? ($cellmeasBuffer['lat'] ?? null);
-                        $lon     = $currentGps['lon'] ?? ($cellmeasBuffer['lon'] ?? null);
-                        $timestampWaktu = $convertTime($rawTime, $logDate) ?? ($cellmeasBuffer['timestamp'] ?? null);
-
-                        if ($lat === null || $lon === null) {
-                            Log::warning("MIMOMEAS baris $lineCount tidak memiliki koordinat dari GPS sebelumnya.");
-                        }
-
-                        $pci    = $parts[9] ?? ($cellmeasBuffer['pci'] ?? 'Unknown');
-
-                        $bandFreq  = $resolveBandFrequency($earfcn);
-                        $nValue    = $n_value_chi ?? $bandFreq['n_value'];
-                        $bandwidth = $bandwidth_chi ?? $bandFreq['bandwidth'];
-
-                        $rawRsrp = (float)($parts[14] ?? -120);
-                        $rsrpValue = $rawRsrp >= 0 ? -120 : $rawRsrp;
-
-                        $rawRssi = (float)($parts[12] ?? -120);
-
-                        $rawRsrq = (float)($parts[13] ?? -20);
-                        $rsrqValue = $rawRsrq >= 0 ? -20.0 : $rawRsrq;
-
-                        $rawSinr = (float)($parts[11] ?? null);
-                        if ($rawSinr == null) {
-
-                            $rsrp_mW = pow(10, ($rawRsrp / 10));
-                            $rssi_mW = pow(10, ($rawRssi / 10));
-
-                            if ($nValue <= 0) {
-                                $nValue = 100;
+                    if ($line === '' || str_starts_with($line, '#')) {
+                        if (str_starts_with($line, '#START')) {
+                            $parts = str_getcsv($line, $delimiter);
+                            $rawDate = $parts[3] ?? null;
+                            if ($rawDate) {
+                                try {
+                                    $dateString = trim($rawDate, '"');
+                                    $logDate = Carbon::createFromFormat('d.m.Y', $dateString)->format('Y-m-d');
+                                } catch (\Exception $e) {
+                                    $logDate = Carbon::now()->format('Y-m-d');
+                                }
                             }
-                            
-                            $signal_total_mW = $rsrp_mW * 12 * $nValue;
-                            $interference_noise_mW = $rssi_mW - $signal_total_mW;
+                        }
+                        continue;
+                    }
 
-                            if ($interference_noise_mW <= 0) {
-                                $sinrValue = 20.0; 
-                            } else {
-                                $interference_noise_per_re_mW = $interference_noise_mW / (12 * $nValue);
-                                $sinr_linear = $rsrp_mW / $interference_noise_per_re_mW;
-                                $sinr_dB = 10 * log10($sinr_linear);
-                                $sinrValue = max(-30.0, min($sinr_dB, 30.0));
-                            }
+                    if (!$logDate) {
+                        $logDate = Carbon::now()->format('Y-m-d');
+                    }
+
+                    $parts = str_getcsv($line, $delimiter);
+
+                    if (str_starts_with($line, 'GPS')) {
+                        if (isset($parts[3], $parts[4]) && $parts[3] !== '' && $parts[4] !== '') {
+                            $currentGps['lat'] = (float)$parts[4];
+                            $currentGps['lon'] = (float)$parts[3];
                         } else {
-                            $sinrValue = $rawSinr;
+                            $currentGps = ['lat' => null, 'lon' => null];
                         }
+                        continue;
+                    }
 
-                        $dataSinyal[] = [
-                            'perjalanan_id'     => $perjalananId,
-                            'timestamp_waktu'   => $timestampWaktu,
-                            'teknologi'         => 'LTE', 
-                            'pci'               => $pci, 
-                            'rsrp'              => $rsrpValue,
-                            'rssi'              => $rawRssi, 
-                            'rsrq'              => $rsrqValue, 
-                            'sinr'              => $sinrValue,
-                            'earfcn'            => $earfcn,
-                            'band'              => $bandFreq['band'],
-                            'frekuensi'         => $bandFreq['frekuensi'],
-                            'bandwidth'         => $bandwidth,
-                            'n_value'           => $nValue,
-                            'latitude'          => $lat, 
-                            'longitude'         => $lon, 
-                            'cell_id'           => $cell_chi,
+                    if (str_starts_with($line, 'CHI')) {
+                        $n_value_chi = $parts[6] ?? null;
+                        $bandwidth_chi = $n_value_chi / 5;
+                        $cell_chi = $parts[9] ?? null;
+                        continue;
+                    }
+
+                    if (str_starts_with($line, 'CELLMEAS')) {
+                        $cellmeasBuffer = [
+                            'time'      => $parts[1] ?? null,
+                            'lat'       => $currentGps['lat'] ?? null,
+                            'lon'       => $currentGps['lon'] ?? null,
+                            'pci'       => $parts[10] ?? null,
+                            'earfcn'    => $parts[9] ?? null,
+                            'rsrp'      => $parts[12] ?? null,
+                            'rssi'      => $parts[11] ?? null,
+                            'rsrq'      => $parts[13] ?? null,
+                            'sinr'      => $parts[14] ?? null,
                         ];
-                    } catch (\Exception $e) {
-                        Log::warning("Gagal parsing baris MIMOMEAS ke-$lineCount: " . $e->getMessage());
+                        $cellmeasBuffer['timestamp'] = $convertTime($cellmeasBuffer['time'], $logDate);
+                        continue;
+                    }
+
+                    if (str_starts_with($line, 'MIMOMEAS')) {
+                        try {
+                            $rawTime = $parts[1] ?? ($cellmeasBuffer['time'] ?? null);
+                            $earfcn = (int)($parts[8] ?? ($cellmeasBuffer['earfcn'] ?? null));
+
+                            if ($earfcn == 0 || $earfcn == 432000 || $earfcn == 467000) {
+                                continue;
+                            }
+
+                            $lat = $currentGps['lat'] ?? ($cellmeasBuffer['lat'] ?? null);
+                            $lon = $currentGps['lon'] ?? ($cellmeasBuffer['lon'] ?? null);
+                            $timestampWaktu = $convertTime($rawTime, $logDate) ?? ($cellmeasBuffer['timestamp'] ?? null);
+
+                            if ($lat === null || $lon === null) {
+                                Log::warning("MIMOMEAS baris $lineCount tidak memiliki koordinat dari GPS sebelumnya.");
+                            }
+
+                            $pci = $parts[9] ?? ($cellmeasBuffer['pci'] ?? 'Unknown');
+                            $bandFreq = $resolveBandFrequency($earfcn);
+                            $nValue = $n_value_chi ?? $bandFreq['n_value'];
+                            $bandwidth = $bandwidth_chi ?? $bandFreq['bandwidth'];
+
+                            $rawRsrp = (float)($cellmeasBuffer['rsrp']);
+                            $rawRssi = (float)($cellmeasBuffer['rssi']);
+                            $rawRsrq = (float)($cellmeasBuffer['rsrq']);
+                            $rawSinr = (float)($cellmeasBuffer['sinr']);
+
+                            if ($rawSinr == null) {
+                                $rsrp_mW = pow(10, ($rawRsrp / 10));
+                                $rssi_mW = pow(10, ($rawRssi / 10));
+
+                                if ($nValue <= 0) {
+                                    $nValue = 100;
+                                }
+
+                                $signal_total_mW = $rsrp_mW * 12 * $nValue;
+                                $interference_noise_mW = $rssi_mW - $signal_total_mW;
+
+                                if ($interference_noise_mW <= 0) {
+                                    $sinrValue = 30.0;
+                                } else {
+                                    $interference_noise_per_re_mW = $interference_noise_mW / (12 * $nValue);
+                                    $sinr_linear = $rsrp_mW / $interference_noise_per_re_mW;
+                                    $sinr_dB = 10 * log10($sinr_linear);
+                                    $sinrValue = max(-30.0, min($sinr_dB, 30.0));
+                                }
+                            } else {
+                                $sinrValue = $rawSinr;
+                            }
+
+                            yield [
+                                'perjalanan_id'     => $perjalananId,
+                                'timestamp_waktu'   => $timestampWaktu,
+                                'cell_id'           => $cell_chi ?? 0,
+                                'pci'               => $pci ?? 0,
+                                'earfcn'            => $earfcn ?? 0,
+                                'band'              => $bandFreq['band'],
+                                'frekuensi'         => $bandFreq['frekuensi'],
+                                'bandwidth'         => $bandwidth,
+                                'n_value'           => $nValue,
+                                'rsrp'              => $rawRsrp,
+                                'rssi'              => $rawRssi,
+                                'rsrq'              => $rawRsrq,
+                                'sinr'              => $sinrValue,
+                                'latitude'          => $lat,
+                                'longitude'         => $lon,
+                            ];
+                        } catch (\Exception $e) {
+                            Log::warning("Gagal parsing baris MIMOMEAS ke-$lineCount: " . $e->getMessage());
+                        }
                     }
                 }
-            }
 
-            fclose($handle);
-        }
-        return $dataSinyal;
+                fclose($handle);
+            }
+        });
     }
+
+
+
+
+
+
+
 
 }

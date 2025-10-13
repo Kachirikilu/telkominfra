@@ -7,69 +7,153 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use App\Models\Perjalanan;
-use App\Models\PerjalananData;
+use App\Models\DataPerjalanan;
+use App\Models\PengukuranSinyal;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\File; 
 use App\Http\Controllers\Telkominfra\FileTelkominfraController;
+use Illuminate\Support\LazyCollection; 
 
 class DataTelkominfraController extends Controller
 {
+
+    // public function store(Request $request)
+    // {
+    //     try {
+    //         $validatedData = $request->validate([
+    //             'id_perjalanan' => 'nullable|string|max:255',
+    //             'nama_pengguna' => 'required|string|max:255',
+    //             'nama_tempat'   => 'required|string|max:255',
+    //             'nmf_file'      => 'required',
+    //             'nmf_file.*'    => 'file|mimes:txt,nmf|max:51200',
+    //             'status'        => 'required|in:Before,After',
+    //         ]);
+    //     } catch (ValidationException $e) {
+    //         return redirect()->back()->withErrors($e->errors())->withInput();
+    //     }
+
+    //     $files = $request->file('nmf_file');
+    //     $idPerjalananInput = $validatedData['id_perjalanan'] ?? '';
+    //     $folderPath = 'uploads/perjalanan';
+    //     $destinationPath = public_path($folderPath);
+    //     $parser = new FileTelkominfraController();
+
+    //     // Buat perjalanan utama (hanya sekali)
+    //     $idPerjalananStore = ($idPerjalananInput == '') ? Str::uuid()->toString() : $idPerjalananInput;
+    //     $perjalanan = Perjalanan::firstOrCreate(
+    //         ['id_perjalanan' => $idPerjalananStore],
+    //         [
+    //             'nama_pengguna' => $validatedData['nama_pengguna'],
+    //             'nama_tempat' => $validatedData['nama_tempat'],
+    //         ]
+    //     );
+
+    //     foreach ($files as $file) {
+    //         try {
+    //             $fileExtension = $file->getClientOriginalExtension();
+    //             $tempUniqueFileName = $idPerjalananStore . '_' . Str::random(6) . '.' . $fileExtension;
+    //             $file->move($destinationPath, $tempUniqueFileName);
+    //             $oldPath = $destinationPath . DIRECTORY_SEPARATOR . $tempUniqueFileName;
+
+    //             $nmfHeaderData = $parser->parseNmfHeader($oldPath);
+    //             $nmfTimes = $parser->extractNmfTimes($oldPath);
+    //             $perangkat = $nmfHeaderData['perangkat'] ?? 'Unknown Device';
+
+    //             // Simpan data perjalanan_data
+    //             $dataPerjalanan = DataPerjalanan::create([
+    //                 'perjalanan_id' => $perjalanan->id,
+    //                 'perangkat' => $perangkat,
+    //                 'file_nmf' => $tempUniqueFileName,
+    //                 'status' => $validatedData['status'],
+    //                 'timestamp_mulai' => $nmfTimes['timestamp_mulai'],
+    //                 'timestamp_selesai' => $nmfTimes['timestamp_selesai'],
+    //             ]);
+
+    //             $finalFileName = $dataPerjalanan->id . '_' . $perjalanan->id_perjalanan . '.' . $fileExtension;
+    //             $newPath = $destinationPath . DIRECTORY_SEPARATOR . $finalFileName;
+
+    //             if (File::exists($oldPath)) {
+    //                 File::move($oldPath, $newPath);
+    //                 $dataPerjalanan->file_nmf = $finalFileName;
+    //                 $dataPerjalanan->save();
+    //             }
+
+    //             // Simpan data sinyal
+    //             try {
+    //                 $dataSinyal = $parser->parseNmfSinyal($newPath, $perjalanan->id);
+    //                 if (!empty($dataSinyal)) {
+    //                     foreach ($dataSinyal as &$item) {
+    //                         $item['data_perjalanan_id'] = $dataPerjalanan->id;
+    //                         unset($item['perjalanan_id']);
+    //                     }
+
+    //                     \App\Models\PengukuranSinyal::insert($dataSinyal);
+    //                     Log::info("Berhasil menyimpan " . count($dataSinyal) . " data sinyal untuk file: " . $finalFileName);
+    //                 } else {
+    //                     Log::warning("Tidak ada data sinyal yang diparsing dari file: " . $finalFileName);
+    //                 }
+    //             } catch (\Exception $signalEx) {
+    //                 Log::error("Gagal menyimpan data sinyal dari $finalFileName: " . $signalEx->getMessage());
+    //             }
+    //         } catch (\Exception $ex) {
+    //             Log::error("Gagal memproses file: " . $file->getClientOriginalName(), [
+    //                 'error' => $ex->getMessage(),
+    //                 'line' => $ex->getLine(),
+    //             ]);
+    //             continue;
+    //         }
+    //     }
+
+    //     return redirect()->route('telkominfra.show', $perjalanan->id)
+    //         ->with('success', 'Semua file berhasil diproses untuk perjalanan ID: ' . $perjalanan->id_perjalanan);
+    // }
 
     public function store(Request $request)
     {
         try {
             $validatedData = $request->validate([
-                'id_perjalanan' => 'nullable|string|max:255', 
-                'nama_pengguna' => 'required|string|max:255', 
-                'nama_tempat' => 'required|string|max:255', 
-                'nmf_file' => 'required|file|mimes:txt,nmf|max:51200',
-                'status' => 'required|in:Before,After',
+                'id_perjalanan' => 'nullable|string|max:255',
+                'nama_pengguna' => 'required|string|max:255',
+                'nama_tempat'   => 'required|string|max:255',
+                'nmf_file'      => 'required',
+                'nmf_file.*'    => 'file|mimes:txt,nmf|max:51200',
+                'status'        => 'required|in:Before,After',
             ]);
         } catch (ValidationException $e) {
             return redirect()->back()->withErrors($e->errors())->withInput();
         }
 
-        $tempUniqueFileName = null;
+        $files = $request->file('nmf_file');
         $idPerjalananInput = $validatedData['id_perjalanan'] ?? '';
         $folderPath = 'uploads/perjalanan';
         $destinationPath = public_path($folderPath);
-        $fileExtension = $request->file('nmf_file')->getClientOriginalExtension();
+        $parser = new FileTelkominfraController();
 
-        try {
-            $idPerjalananStore = ($idPerjalananInput == '') ? Str::uuid()->toString() : $idPerjalananInput;
+        // Buat perjalanan utama (hanya sekali)
+        $idPerjalananStore = ($idPerjalananInput == '') ? Str::uuid()->toString() : $idPerjalananInput;
+        $perjalanan = Perjalanan::firstOrCreate(
+            ['id_perjalanan' => $idPerjalananStore],
+            [
+                'nama_pengguna' => $validatedData['nama_pengguna'],
+                'nama_tempat' => $validatedData['nama_tempat'],
+            ]
+        );
 
-            $file = $request->file('nmf_file');
-            $tempUniqueFileName = $idPerjalananStore . '.' . $fileExtension;
-            $file->move($destinationPath, $tempUniqueFileName); 
-            $oldPath = $destinationPath . DIRECTORY_SEPARATOR . $tempUniqueFileName; 
-            
-            $parser = new FileTelkominfraController();
-            $nmfHeaderData = $parser->parseNmfHeader($oldPath); 
-            $nmfTimes = $parser->extractNmfTimes($oldPath); 
-            $perangkat = $nmfHeaderData['perangkat'] ?? 'Unknown Device';
-            
-            $finalIdPerjalanan = null;
+        foreach ($files as $file) {
+            try {
+                $fileExtension = $file->getClientOriginalExtension();
+                $tempUniqueFileName = $idPerjalananStore . '_' . Str::random(6) . '.' . $fileExtension;
+                $file->move($destinationPath, $tempUniqueFileName);
+                $oldPath = $destinationPath . DIRECTORY_SEPARATOR . $tempUniqueFileName;
 
-            if (!empty($idPerjalananInput) && Perjalanan::where('id_perjalanan', $idPerjalananInput)->exists()) {
-                $finalIdPerjalanan = $idPerjalananInput;
-            }
+                $nmfHeaderData = $parser->parseNmfHeader($oldPath);
+                $nmfTimes = $parser->extractNmfTimes($oldPath);
+                $perangkat = $nmfHeaderData['perangkat'] ?? 'Unknown Device';
 
-            if (empty($finalIdPerjalanan)) {
-                $finalIdPerjalanan = $idPerjalananStore;
-            }
-
-            $results = DB::transaction(function () use ($validatedData, $finalIdPerjalanan, $perangkat, $tempUniqueFileName, $nmfTimes) {
-                $perjalanan = Perjalanan::firstOrNew(['id_perjalanan' => $finalIdPerjalanan]);
-
-                if (!$perjalanan->exists) {
-                    $perjalanan->nama_pengguna = $validatedData['nama_pengguna'];
-                    $perjalanan->nama_tempat = $validatedData['nama_tempat'];
-                    $perjalanan->save();
-                }
-                
-                $perjalananData = PerjalananData::create([
-                    'perjalanan_id' => $perjalanan->id, 
+                // Simpan data perjalanan_data
+                $dataPerjalanan = DataPerjalanan::create([
+                    'perjalanan_id' => $perjalanan->id,
                     'perangkat' => $perangkat,
                     'file_nmf' => $tempUniqueFileName,
                     'status' => $validatedData['status'],
@@ -77,44 +161,49 @@ class DataTelkominfraController extends Controller
                     'timestamp_selesai' => $nmfTimes['timestamp_selesai'],
                 ]);
 
-                return [
-                    'perjalanan' => $perjalanan,
-                    'perjalananData' => $perjalananData
-                ];
-            });
+                $finalFileName = $dataPerjalanan->id . '_' . $perjalanan->id_perjalanan . '.' . $fileExtension;
+                $newPath = $destinationPath . DIRECTORY_SEPARATOR . $finalFileName;
 
-            $perjalanan = $results['perjalanan'];
-            $perjalananData = $results['perjalananData'];
-            $perjalananId = $perjalanan->id;
+                if (File::exists($oldPath)) {
+                    File::move($oldPath, $newPath);
+                    $dataPerjalanan->file_nmf = $finalFileName;
+                    $dataPerjalanan->save();
+                }
 
-            $finalFileName = $perjalananData->id . '_' . $perjalanan->id_perjalanan . '.' . $fileExtension;
-            $newPath = $destinationPath . DIRECTORY_SEPARATOR . $finalFileName;
-            
-            if (File::exists($oldPath)) {
-                File::move($oldPath, $newPath);
-                $perjalananData->file_nmf = $finalFileName;
-                $perjalananData->save();
-            } else {
-                Log::warning("File temporer hilang setelah commit DB: " . $oldPath);
+                // 🔹 Gunakan LazyCollection untuk parsing file besar
+                try {
+                    $lazySignals = $parser->parseNmfSinyal($newPath, $perjalanan->id);
+
+                    $lazySignals
+                        ->map(function ($item) use ($dataPerjalanan) {
+                            $item['data_perjalanan_id'] = $dataPerjalanan->id;
+                            unset($item['perjalanan_id']);
+                            return $item;
+                        })
+                        ->chunk(500) // simpan per 500 data untuk efisiensi
+                        ->each(function ($chunk) use ($finalFileName) {
+                            PengukuranSinyal::insert($chunk->toArray());
+                            Log::info("Menyimpan batch " . count($chunk) . " data sinyal dari: $finalFileName");
+                        });
+
+                    Log::info("Berhasil menyimpan data sinyal (lazy) dari file: $finalFileName");
+                } catch (\Exception $signalEx) {
+                    Log::error("Gagal menyimpan data sinyal dari $finalFileName: " . $signalEx->getMessage());
+                }
+            } catch (\Exception $ex) {
+                Log::error("Gagal memproses file: " . $file->getClientOriginalName(), [
+                    'error' => $ex->getMessage(),
+                    'line' => $ex->getLine(),
+                ]);
+                continue;
             }
-
-            return redirect()->route('telkominfra.show', $perjalananId)
-                ->with('success', 'Data log berhasil ditambahkan. File: ' . $finalFileName . ' di Perjalanan ID Sesi: ' . $perjalanan->id_perjalanan);
-
-        } catch (\Exception $e) {
-            $fileToDeletePath = public_path($folderPath . DIRECTORY_SEPARATOR . $tempUniqueFileName);
-            if ($tempUniqueFileName && File::exists($fileToDeletePath)) {
-                File::delete($fileToDeletePath);
-            }
-            
-            Log::error("Gagal memproses unggahan file:", [
-                'error' => $e->getMessage(),
-                'line' => $e->getLine(),
-            ]);
-            
-            return redirect()->back()->with('error', 'Gagal memproses data. Pesan: ' . $e->getMessage())->withInput();
         }
+
+        return redirect()->route('telkominfra.show', $perjalanan->id)
+            ->with('success', 'Semua file berhasil diproses untuk perjalanan ID: ' . $perjalanan->id_perjalanan);
     }
+
+
 
      /**
      * Update data sesi perjalanan (nama_pengguna dan nama_tempat).
@@ -154,7 +243,7 @@ class DataTelkominfraController extends Controller
     }
 
     /**
-     * Hapus sesi perjalanan dan data terkait (PerjalananData dan file log).
+     * Hapus sesi perjalanan dan data terkait (DataPerjalanan dan file log).
      *
      * @param  int  $id
      * @return \Illuminate\Http\Response
@@ -168,10 +257,10 @@ class DataTelkominfraController extends Controller
 
             DB::transaction(function () use ($perjalanan) {
                 $basePath = public_path('uploads/perjalanan/');
-                $perjalananDatas = PerjalananData::where('perjalanan_id', $perjalanan->id)->get(); 
+                $dataPerjalanans = DataPerjalanan::where('perjalanan_id', $perjalanan->id)->get(); 
                 
-                if ($perjalananDatas->isNotEmpty()) { 
-                    foreach ($perjalananDatas as $dataItem) {
+                if ($dataPerjalanans->isNotEmpty()) { 
+                    foreach ($dataPerjalanans as $dataItem) {
                         if ($dataItem->file_nmf && File::exists($basePath . $dataItem->file_nmf)) {
                             File::delete($basePath . $dataItem->file_nmf);
                             Log::debug('File NMF dihapus: ' . $dataItem->file_nmf);
@@ -183,11 +272,11 @@ class DataTelkominfraController extends Controller
                         }
                     }
                 } else {
-                    Log::warning('Tidak ada data log PerjalananData yang ditemukan untuk ID Perjalanan: ' . $perjalanan->id);
+                    Log::warning('Tidak ada data log DataPerjalanan yang ditemukan untuk ID Perjalanan: ' . $perjalanan->id);
                 }
 
-                $deletedLogCount = PerjalananData::where('perjalanan_id', $perjalanan->id)->delete();
-                Log::info("Data log PerjalananData berhasil dihapus. Jumlah baris: {$deletedLogCount}");
+                $deletedLogCount = DataPerjalanan::where('perjalanan_id', $perjalanan->id)->delete();
+                Log::info("Data log DataPerjalanan berhasil dihapus. Jumlah baris: {$deletedLogCount}");
 
                 $perjalanan->delete();
                 Log::info('Sesi Perjalanan utama berhasil dihapus.');
@@ -205,41 +294,41 @@ class DataTelkominfraController extends Controller
     }
 
     /**
-     * Hapus satu data log (PerjalananData) dan file terkait.
-     * Metode ini dipanggil oleh route 'perjalananData.destroy'.
+     * Hapus satu data log (DataPerjalanan) dan file terkait.
+     * Metode ini dipanggil oleh route 'dataPerjalanan.destroy'.
      *
-     * @param  int  $id ID dari PerjalananData yang akan dihapus.
+     * @param  int  $id ID dari DataPerjalanan yang akan dihapus.
      * @return \Illuminate\Http\Response
      */
-    public function destroyPerjalananData($id)
+    public function DatadestroyPerjalanan($id)
     {
-        $perjalananData = null;
+        $dataPerjalanan = null;
         try {
-            $perjalananData = PerjalananData::findOrFail($id);
-            Log::info("Mencoba menghapus satu log PerjalananData ID: {$id}");
+            $dataPerjalanan = DataPerjalanan::findOrFail($id);
+            Log::info("Mencoba menghapus satu log DataPerjalanan ID: {$id}");
 
-            $perjalananId = $perjalananData->perjalanan_id;
-            DB::transaction(function () use ($perjalananData) {
+            $perjalananId = $dataPerjalanan->perjalanan_id;
+            DB::transaction(function () use ($dataPerjalanan) {
                 $basePath = public_path('uploads/perjalanan/');
 
-                if ($perjalananData->file_nmf && File::exists($basePath . $perjalananData->file_nmf)) {
-                    File::delete($basePath . $perjalananData->file_nmf);
-                    Log::debug('File NMF dihapus: ' . $perjalananData->file_nmf);
+                if ($dataPerjalanan->file_nmf && File::exists($basePath . $dataPerjalanan->file_nmf)) {
+                    File::delete($basePath . $dataPerjalanan->file_nmf);
+                    Log::debug('File NMF dihapus: ' . $dataPerjalanan->file_nmf);
                 }
                 
-                if ($perjalananData->file_gpx && File::exists($basePath . $perjalananData->file_gpx)) {
-                    File::delete($basePath . $perjalananData->file_gpx);
-                    Log::debug('File GPX dihapus: ' . $perjalananData->file_gpx);
+                if ($dataPerjalanan->file_gpx && File::exists($basePath . $dataPerjalanan->file_gpx)) {
+                    File::delete($basePath . $dataPerjalanan->file_gpx);
+                    Log::debug('File GPX dihapus: ' . $dataPerjalanan->file_gpx);
                 }
 
-                $perjalananData->delete();
-                Log::info('Satu data log PerjalananData berhasil dihapus.');
+                $dataPerjalanan->delete();
+                Log::info('Satu data log DataPerjalanan berhasil dihapus.');
             });
 
             return redirect()->route('telkominfra.show', $perjalananId)->with('success', 'Satu log data dan file terkait berhasil dihapus!');
 
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            Log::warning("Percobaan hapus log gagal: PerjalananData ID {$id} tidak ditemukan.");
+            Log::warning("Percobaan hapus log gagal: DataPerjalanan ID {$id} tidak ditemukan.");
             return redirect()->route('telkominfra.index')->with('error', 'Log data yang ingin dihapus tidak ditemukan.');
         } catch (\Exception $e) {
             Log::error('Gagal menghapus log data ID: ' . $id . '. Error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);

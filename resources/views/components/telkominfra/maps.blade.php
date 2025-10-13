@@ -1,6 +1,6 @@
 @push('styles')
-    {{-- <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" /> --}}
-    <link rel="stylesheet" href="{{ secure_asset('css/leaflet/leaflet.css') }}" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    {{-- <link rel="stylesheet" href="{{ secure_asset('css/leaflet/leaflet.css') }}" /> --}}
 
     <style>
         #map {
@@ -72,7 +72,7 @@
                     class="dot absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-all duration-300 peer-checked:translate-x-6">
                 </div>
             </div>
-            <span class="text-sm text-gray-600 ml-2 font-semibold">Ringkas</span>
+            <span class="text-sm text-gray-600 ml-2 font-semibold">Rasio Detail</span>
         </label>
     </div>
 
@@ -97,11 +97,13 @@
         </div>
     </div>
 
-    <div class="relative flex items-center my-6">
-        <div class="flex-grow border-t border-gray-300"></div>
-        <span class="mx-4 text-gray-500 text-sm font-medium">Data Log Terpisah</span>
-        <div class="flex-grow border-t border-gray-300"></div>
-    </div>
+    @if ($mapsData)
+        <div class="relative flex items-center my-6">
+            <div class="flex-grow border-t border-gray-300"></div>
+            <span class="mx-4 text-gray-500 text-sm font-medium">Data Log Terpisah</span>
+            <div class="flex-grow border-t border-gray-300"></div>
+        </div>
+    @endif
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="grid grid-cols-1 gap-4">
@@ -123,8 +125,8 @@
 
 
 @push('scripts')
-    {{-- <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script> --}}
-    <script src="{{ secure_asset('js/leaflet/leaflet.js') }}"></script>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    {{-- <script src="{{ secure_asset('js/leaflet/leaflet.js') }}"></script> --}}
 
     <script>
         var allMapsData = @json($mapsData ?? []);
@@ -236,7 +238,7 @@
                 let seg = L.circleMarker([start[0], start[1]], {
                     radius: 3,
                     fillColor: color,
-                    color: '#000000',
+                    color: '#A00000',
                     weight: 0,
                     opacity: 1,
                     fillOpacity: 0.8
@@ -247,12 +249,11 @@
                 //     freValue = "2300-2400";
                 // }
 
-                const popUp = isCompactRatio ? seg.bindPopup(
+                const popUp = !isDetailRatio ? seg.bindPopup(
                         "RSRP: <b>" + rsrp.toFixed(1) + " dBm</b><br>" +
                         "RSSI: <b>" + rssi.toFixed(1) + " dBm</b><br>" +
                         "RSRQ: <b>" + rsrq.toFixed(1) + " dB</b><br>" +
                         "SINR: <b>" + sinr.toFixed(1) + " dB</b><br>" +
-                        "Band: <b>" + band + "</b><br>" +
                         "Latitude: <b>" + latitude.toFixed(6) + "</b><br>" +
                         "Longitude: <b>" + longitude.toFixed(6) + "</b><br>" +
                         "Waktu: <b>" + waktu + "</b>"
@@ -262,14 +263,13 @@
                         "RSSI: <b>" + rssi.toFixed(1) + " dBm</b><br>" +
                         "RSRQ: <b>" + rsrq.toFixed(1) + " dB</b><br>" +
                         "SINR: <b>" + sinr.toFixed(1) + " dB</b><br>" +
-                        "N-Value: <b>" + n_value + "</b><br>" +
                         "Cell ID: <b>" + cell + "</b><br>" +
                         "PCI: <b>" + pci + "</b><br>" +
                         "Earfcn: <b>" + earfcn + "</b><br>" +
                         "Band: <b>" + band + "</b><br>" +
                         "Frequency: <b>" + freValue + " MHz</b><br>" +
                         "Bandwidth: <b>" + bandwidth + " MHz</b><br>" +
-                        // "Koordinat: " + latitude.toFixed(6) + ", " + longitude.toFixed(6)
+                        "N-Value: <b>" + n_value + "</b><br>" +
                         "Latitude: <b>" + latitude.toFixed(6) + "</b><br>" +
                         "Longitude: <b>" + longitude.toFixed(6) + "</b><br>" +
                         "Waktu: <b>" + waktu + "</b>"
@@ -288,10 +288,10 @@
 
         // ========== Warna Metric ==========
 
-        let isCompactRatio = false;
+        let isDetailRatio = false;
 
         document.getElementById('ratio-switch').addEventListener('change', function() {
-            isCompactRatio = this.checked;
+            isDetailRatio = this.checked;
             redrawMaps();
         });
 
@@ -299,47 +299,46 @@
         function getMetricInfo(metric, value = null, counters = null) {
             const sharedColors = [
                 '#0652DD', '#1289A7', '#009432', '#A3CB38', '#C4E538',
-                '#FFC312', '#F79F1F', '#EE5A24', '#c23616', '#000000'
+                '#FFC312', '#F79F1F', '#EE5A24', '#c23616', '#A00000'
             ];
 
             const compactColors = [
-                '#0652DD', '#009432', '#C4E538', '#F79F1F', '#c23616'
+                '#0652DD', '#009432', '#FFC312', '#EE5A24', '#A00000'
             ];
 
             const metricConfigs = {
                 rsrp: {
-                    labels: isCompactRatio ? ['≥ -85', '-95 s/d -85', '-100 s/d -95', '-105 s/d -100', '≤ -105'] : [
+                    labels: !isDetailRatio ? ['≥ -85', '-95 s/d -85', '-100 s/d -95', '-105 s/d -100', '≤ -105'] : [
                         '≥ -80', '-85 s/d -80', '-90 s/d -85', '-95 s/d -90', '-100 s/d -95', '-105 s/d -100',
                         '-110 s/d -105', '-115 s/d -110', '-120 s/d -115', '≤ -120'
                     ],
-                    mins: isCompactRatio ? [-85, -95, -100, -105, -9999] : [-80, -85, -90, -95, -100, -105, -110, -115,
+                    mins: !isDetailRatio ? [-85, -95, -100, -105, -9999] : [-80, -85, -90, -95, -100, -105, -110, -115,
                         -120, -9999
                     ]
                 },
                 rssi: {
-                    labels: isCompactRatio ? ['≥ -67', '-73 s/d -67', '-79 s/d -73', '-85 s/d -79', '≤ -85'] : ['≥ -52',
-                        '-58 s/d -52', '-64 s/d -58', '-70 s/d -64', '-76 s/d -70', '-82 s/d -76',
-                        '-88 s/d -82', '-94 s/d -88', '-100 s/d -94', '≤ -100'
+                    labels: !isDetailRatio ? ['≥ -65', '-75 s/d -65', '-85 s/d -75', '-95 s/d -85', '≤ -95'] : [
+                        "≥ -60", "-65 s/d -60", "-70 s/d -65", "-75 s/d -70", "-80 s/d -75", "-85 s/d -80", "-90 s/d -85", "-95 s/d -90", "-100 s/d -95", "≤ -100"
                     ],
-                    mins: isCompactRatio ? [-67, -73, -79, -85, -9999] : [-52, -58, -64, -70, -76, -82, -88, -94, -100,
+                    mins: !isDetailRatio ? [-65, -75, -85, -95, -9999] : [-60, -65, -70, -75, -80, -85, -90, -95, -100,
                         -9999
                     ]
                 },
                 rsrq: {
-                    labels: isCompactRatio ? ['≥ -10', '-14 s/d -10', '-16 s/d -14', '-20 s/d -16', '≤ -20'] : ['≥ -3',
+                    labels: !isDetailRatio ? ['≥ -10', '-14 s/d -10', '-16 s/d -14', '-20 s/d -16', '≤ -20'] : ['≥ -3',
                         '-5 s/d -3', '-7 s/d -5', '-9 s/d -7', '-11 s/d -9', '-13 s/d -11', '-15 s/d -13',
                         '-17 s/d -15', '-19 s/d -17', '≤ -19'
                     ],
-                    mins: isCompactRatio ? [-10, -14, -16, -20, -9999] : [-3, -5, -7, -9, -11, -13, -15, -17, -19, -
+                    mins: !isDetailRatio ? [-10, -14, -16, -20, -9999] : [-3, -5, -7, -9, -11, -13, -15, -17, -19, -
                         9999
                     ]
                 },
                 sinr: {
-                    labels: isCompactRatio ? ['≥ 20', '10 s/d 20', '0 s/d 10', '-10 s/d 0', '≤ -10'] : ['≥ 20',
+                    labels: !isDetailRatio ? ['≥ 20', '10 s/d 20', '0 s/d 10', '-5 s/d 0', '≤ -5'] : ['≥ 20',
                         '15 s/d 20', '10 s/d 15', '5 s/d 10', '0 s/d 5', '-5 s/d 0', '-10 s/d -5',
                         '-15 s/d -10', '-20 s/d -15', '≤ -20'
                     ],
-                    mins: isCompactRatio ? [20, 10, 0, -5, -9999] : [20, 15, 10, 5, 0, -5, -10, -15, -20, -9999]
+                    mins: !isDetailRatio ? [20, 10, 0, -5, -9999] : [20, 15, 10, 5, 0, -5, -10, -15, -20, -9999]
                 }
             };
 
@@ -350,10 +349,10 @@
                 colors: []
             };
 
-            const colors = isCompactRatio ? compactColors : sharedColors;
+            const colors = !isDetailRatio ? compactColors : sharedColors;
             const ranges = config.mins.map((min, i) => ({
                 min,
-                color: colors[i] || '#000000'
+                color: colors[i] || '#A00000'
             }));
 
             if (value === null) {
@@ -397,7 +396,7 @@
             if (bandwidth == 10) return '#C4E538';
             if (bandwidth == 5) return '#F79F1F';
             if (bandwidth == 3) return '#c23616';
-            if (bandwidth == 1.4) return '#000000';
+            if (bandwidth == 1.4) return '#A00000';
             return '#C0C0C0';
         }
 
@@ -445,7 +444,7 @@
             // ];
 
             const sharedColors = [
-                '#EA2027', // merah
+                '#FA2027', // merah
                 '#0652DD', // biru
                 '#ADFF2F', // hijau kekuningan terang
                 '#e84393', // magenta
@@ -456,7 +455,12 @@
                 '#009432', // hijau gelap
                 '#00cec9', // cyan
                 '#fdcb6e', // emas
-                '#b33939' // pink terang
+                '#b33939', // pink terang
+                '#dcdde1',
+                '#30D984',
+                '#FE5A24',
+                '#ffb8b8',
+                '#A15f21',
             ];
 
             // const sharedColors = [
@@ -553,7 +557,7 @@
                             transform:translateY(-1px)"></i>
                         <span style="font-size:10px;">${label}</span>
                     </div>
-                    <span class="ml-2" style="font-size:10px;">(${percent}%)</span>
+                    <span class="ml-2" style="font-size:10px;">${count} (${percent}%)</span>
                 </div>`;
                     });
                 }
@@ -671,7 +675,7 @@
                         '10': '#C4E538',
                         '5': '#F79F1F',
                         '3': '#c23616',
-                        '1.4': '#000000',
+                        '1.4': '#A00000',
                     };
                     const bwOrder = ['20', '15', '10', '5', '3', '1.4'];
                     const uniqueBandwidths = [...new Set(allBandwidths)];

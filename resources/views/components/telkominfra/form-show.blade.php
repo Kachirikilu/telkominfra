@@ -20,9 +20,10 @@
 
                 {{-- File NMF Input --}}
                 <div>
-                    <label for="nmf_file" class="block text-sm font-medium text-gray-700">File Nemo (.nmf atau .txt
-                        log):</label>
-                    <input type="file" id="nmf_file" name="nmf_file" accept=".nmf,.txt" required
+                    <label for="nmf_file" class="block text-sm font-medium text-gray-700">
+                        File Nemo (.nmf atau .txt log):
+                    </label>
+                    <input type="file" id="nmf_file" name="nmf_file[]" accept=".nmf,.txt" multiple required
                         class="mt-1 block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-white p-2">
                 </div>
 
@@ -32,7 +33,6 @@
                     <select id="status" name="status" required
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500">
                         <option value="Before">Before</option>
-                        {{-- Nilai 'After' diset sebagai default terpilih --}}
                         <option value="After" selected>After</option>
                     </select>
                 </div>

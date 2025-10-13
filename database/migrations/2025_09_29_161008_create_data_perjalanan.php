@@ -12,7 +12,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('perjalanan_datas', function (Blueprint $table) {
+        Schema::create('data_perjalanans', function (Blueprint $table) {
             $table->id();
             
             // Kolom Foreign Key yang merujuk ke tabel 'perjalanans'
@@ -25,9 +25,6 @@ return new class extends Migration
             $table->enum('status', ['Before', 'After'])->default('Before');  
             $table->timestamp('timestamp_mulai')->nullable();
             $table->timestamp('timestamp_selesai')->nullable();
-
-            $table->timestamps();
-            
             // Menambahkan index untuk Foreign Key (opsional, tapi baik untuk performa)
             $table->index(['perjalanan_id']);
         });
@@ -38,6 +35,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('perjalanan_datas');
+        Schema::dropIfExists('data_perjalanans');
     }
 };

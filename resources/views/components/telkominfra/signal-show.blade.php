@@ -51,7 +51,7 @@
 
     $sinrBefore = $signalAverages['Before']['sinr_avg'] ?? null;
     $sinrAfter = $signalAverages['After']['sinr_avg'] ?? null;
-    
+
 @endphp
 
 <div class="bg-white shadow overflow-hidden sm:rounded-lg mb-6">

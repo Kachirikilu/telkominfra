@@ -1,45 +1,61 @@
 <?php
 
-// use Illuminate\Database\Migrations\Migration;
-// use Illuminate\Database\Schema\Blueprint;
-// use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-// return new class extends Migration
-// {
-//     public function up(): void
-//     {
-//         Schema::create('pengukuran_sinyal', function (Blueprint $table) {
-//             $table->id();
-            
-//             // Foreign Key ke tabel perjalanans
-//             $table->foreignId('perjalanan_id')->constrained('perjalanans')->onDelete('cascade');
-            
-//             // Data Sinyal
-//             $table->timestamp('timestamp_waktu');
-            
-//             // Kolom Umum Jaringan (LTE/5G)
-//             $table->string('teknologi', 10)->nullable(); // LTE, NR, 3G
-//             $table->integer('earfcn')->nullable(); // Frekuensi (Channel)
-//             $table->integer('pci')->nullable(); // Physical Cell ID
-            
-//             // Pengukuran Kualitas Sinyal
-//             $table->float('rsrp')->nullable(); // Reference Signal Received Power
-//             $table->float('rsrq')->nullable(); // Reference Signal Received Quality
-//             $table->float('sinr')->nullable(); // Signal to Interference Noise Ratio
-//             $table->float('cqi')->nullable(); // Channel Quality Indicator
-            
-//             // Kolom Lain dari NMF yang mungkin penting
-//             $table->string('cell_id')->nullable(); 
-            
-//             $table->timestamps();
-            
-//             // Index untuk pencarian berdasarkan sesi dan waktu
-//             $table->index(['perjalanan_id', 'timestamp_waktu']);
-//         });
-//     }
+return new class extends Migration
+{
+    /**
+     * Jalankan migrasi.
+     */
+    public function up(): void
+    {
+        Schema::create('pengukuran_sinyals', function (Blueprint $table) {
+            $table->id();
 
-//     public function down(): void
-//     {
-//         Schema::dropIfExists('pengukuran_sinyal');
-//     }
-// };
+            // Relasi ke tabel perjalanan_datas
+            $table->foreignId('data_perjalanan_id')
+                  ->constrained('data_perjalanans')
+                  ->onDelete('cascade');
+
+            // Informasi dasar sinyal
+            // Kolom non-string tetap nullable
+            $table->timestamp('timestamp_waktu')->nullable();
+
+            // Parameter sinyal LTE
+            // Kolom non-string tetap nullable
+            // $table->bigInteger('cell_id')->nullable();
+            $table->string('cell_id', 50);
+            $table->integer('pci')->nullable();
+            $table->integer('earfcn')->nullable();
+
+            // Kolom string diubah (nullable dihapus) agar bisa menyimpan string kosong ('')
+            // Secara default kolom string di MySQL tidak menerima NULL, jadi bisa menyimpan string kosong
+            $table->string('band', 50);
+            $table->string('frekuensi', 50);
+            $table->string('bandwidth', 50);
+            $table->string('n_value', 50);
+
+            // Nilai pengukuran (sinyal)
+            // Kolom non-string tetap nullable
+            $table->float('rsrp')->nullable();
+            $table->float('rssi')->nullable();
+            $table->float('rsrq')->nullable();
+            $table->float('sinr')->nullable();
+
+            // Lokasi
+            // Kolom non-string tetap nullable
+            $table->double('latitude', 10, 6)->nullable();
+            $table->double('longitude', 10, 6)->nullable();
+        });
+    }
+
+    /**
+     * Rollback migrasi.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('pengukuran_sinyals');
+    }
+};

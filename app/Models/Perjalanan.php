@@ -34,4 +34,8 @@ class Perjalanan extends Model
     {
         return $this->hasMany(PerjalananData::class, 'perjalanan_id');
     }
+    public function pengukuranSinyal()
+    {
+        return $this->hasMany(PengukuranSinyal::class, 'perjalanan_id');
+    }
 }

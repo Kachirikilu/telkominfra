@@ -17,7 +17,7 @@ class PengukuranSinyal extends Model
      */
     public $timestamps = false;
 
-    protected $table = 'pengukuran_sinyal';
+    protected $table = 'pengukuran_sinyals';
 
     /**
      * Atribut yang dapat diisi secara massal.
@@ -25,23 +25,28 @@ class PengukuranSinyal extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'perjalanan_id',
+        'data_perjalanan_id',
         'timestamp_waktu',
-        'teknologi',
-        'earfcn',
+        'cell_id',
         'pci',
+        'earfcn',
+        'band',
+        'frekuensi',
+        'bandwidth',
+        'n_value',
         'rsrp',
+        'rssi',
         'rsrq',
         'sinr',
-        'cqi',
-        'cell_id',
+        'latitude',
+        'longitude'
     ];
 
     /**
      * Definisi relasi: Banyak Pengukuran Sinyal dimiliki oleh satu Perjalanan.
      */
-    public function perjalanan(): BelongsTo
+    public function perjalanan_data(): BelongsTo
     {
-        return $this->belongsTo(Perjalanan::class, 'perjalanan_id');
+        return $this->belongsTo(DataPerjalanan::class, 'data_perjalanan_id');
     }
 }

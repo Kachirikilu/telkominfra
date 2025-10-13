@@ -15,16 +15,16 @@
                     <input type="hidden" name="id_perjalanan" value="">
 
                     <div>
-                        <label for="nmf_file" class="block text-sm font-medium text-gray-700">File Nemo (.nmf
-                            atau .txt log):</label>
-                        <input type="file" id="nmf_file" name="nmf_file" accept=".nmf,.txt" required
+                        <label for="nmf_file" class="block text-sm font-medium text-gray-700">
+                            File Nemo (.nmf atau .txt log):
+                        </label>
+                        <input type="file" id="nmf_file" name="nmf_file[]" accept=".nmf,.txt" multiple required
                             class="mt-1 block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-white p-2">
                     </div>
 
                     <div>
                         <label for="nama_pengguna" class="block text-sm font-medium text-gray-700">Nama
                             Pengguna:</label>
-                        {{-- Asumsi Auth::user()->name tersedia --}}
                         <input type="text" id="nama_pengguna" name="nama_pengguna" required
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
                             value="{{ Auth::user()->name ?? 'User Default' }}">
@@ -47,7 +47,6 @@
                     </div>
                 </div>
 
-                {{-- Handling Errors --}}
                 @if ($errors->any())
                     <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
                         role="alert">
@@ -66,6 +65,7 @@
                 </button>
             </form>
         </div>
+
 
 
         @if (session('success'))
@@ -144,7 +144,7 @@
                                             Lihat Peta
                                         </button>
 
-                            
+
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                                         {{ $perjalanan->id_perjalanan }}</td>
@@ -155,10 +155,10 @@
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         {{ $perjalanan->created_at->format('d M Y H:i:s') }}</td>
 
-                                  <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                                         {{-- Form Hapus --}}
-                                        <form action="{{ route('perjalanan.destroy', $perjalanan->id) }}" method="POST"
-                                            class="inline-block"
+                                        <form action="{{ route('perjalanan.destroy', $perjalanan->id) }}"
+                                            method="POST" class="inline-block"
                                             onsubmit="return confirm('Apakah Anda yakin ingin menghapus data perjalanan ini? Data log yang terkait juga akan terhapus.');">
                                             @csrf
                                             @method('DELETE')
