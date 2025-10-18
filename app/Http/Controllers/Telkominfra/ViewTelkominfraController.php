@@ -283,10 +283,8 @@ class ViewTelkominfraController extends Controller
             $centerCoords = [-2.9105859, 104.8536157];
 
             try {
-                // 🔹 Ambil PengukuranSinyal berdasarkan perjalanan_data_id secara lazy
-                $dataSinyal = PengukuranSinyal::where('data_perjalanan_id', $dataItem->id)->lazy(1000);
-                // --- Jika tidak ada data di DB, coba baca dari file NMF (opsional)
-                // $nmfPath = public_path('uploads/perjalanan/' . $dataItem->file_nmf);
+                // $dataSinyal = PengukuranSinyal::where('data_perjalanan_id', $dataItem->id)->lazy(1000);
+                $nmfPath = public_path('uploads/perjalanan/' . $dataItem->file_nmf);
 
                 if (!empty($nmfPath) && File::exists($nmfPath)) {
                     $parser = new FileTelkominfraController();
@@ -294,7 +292,6 @@ class ViewTelkominfraController extends Controller
                 }
 
                 foreach ($dataSinyal as $sinyal) {
-                    // 🔸 Pastikan format data fleksibel (bisa array atau objek)
                     $latitudeData  = $sinyal['latitude'] ?? $sinyal->latitude ?? null;
                     $longitudeData = $sinyal['longitude'] ?? $sinyal->longitude ?? null;
 

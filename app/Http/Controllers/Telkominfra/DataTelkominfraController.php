@@ -173,14 +173,13 @@ class DataTelkominfraController extends Controller
                 // 🔹 Gunakan LazyCollection untuk parsing file besar
                 try {
                     $lazySignals = $parser->parseNmfSinyal($newPath, $perjalanan->id);
-
                     $lazySignals
                         ->map(function ($item) use ($dataPerjalanan) {
                             $item['data_perjalanan_id'] = $dataPerjalanan->id;
                             unset($item['perjalanan_id']);
                             return $item;
                         })
-                        ->chunk(500) // simpan per 500 data untuk efisiensi
+                        ->chunk(1000)
                         ->each(function ($chunk) use ($finalFileName) {
                             PengukuranSinyal::insert($chunk->toArray());
                             Log::info("Menyimpan batch " . count($chunk) . " data sinyal dari: $finalFileName");
