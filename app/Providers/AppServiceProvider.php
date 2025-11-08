@@ -29,13 +29,13 @@ class AppServiceProvider extends ServiceProvider
         //     URL::forceScheme('https');
         // }
 
-        if (config('database.default') === 'sqlite' && !file_exists(database_path('database.sqlite'))) {
-            $tmpPath = '/tmp/database.sqlite';
-            if (!file_exists($tmpPath)) {
-                touch($tmpPath);
-            }
-            config(['database.connections.sqlite.database' => $tmpPath]);
-        }
+        // if (config('database.default') === 'sqlite' && !file_exists(database_path('database.sqlite'))) {
+        //     $tmpPath = '/tmp/database.sqlite';
+        //     if (!file_exists($tmpPath)) {
+        //         touch($tmpPath);
+        //     }
+        //     config(['database.connections.sqlite.database' => $tmpPath]);
+        // }
 
         if ($this->app->environment('production')) {
             \URL::forceScheme('https');
