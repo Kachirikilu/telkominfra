@@ -17,7 +17,7 @@ export default defineConfig({
                 'https://4m445w5p-8000.asse.devtunnels.ms',
                 // 'https://fxkkrc1l-5173.asse.devtunnels.ms',
                 // 'https://e080e8c99f28.ngrok-free.app',
-                'https://6a4069e9593b.ngrok-free.app'
+                'https://da3a359b92ef.ngrok-free.app/p'
             ],
             methods: ['GET', 'HEAD', 'POST', 'OPTIONS'],
             credentials: true,

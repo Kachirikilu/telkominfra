@@ -20,16 +20,21 @@
                 <x-telkominfra.maintenance.show.form-show
                     :perjalanan-detail="$perjalananDetail ?? null"
                 />
-                <x-telkominfra.maintenance.show.keluh-pengguna.unassign 
+                {{-- <x-telkominfra.maintenance.show.keluh-pengguna.unassign 
                     :komentarTerhubung="$komentarTerhubung ?? null"
                     :komentarBelumTerhubung="$komentarBelumTerhubung ?? null"
-                />
+                /> --}}
+                {{-- <livewire:komentar-unassign :perjalanan-id="$perjalananDetail->id" /> --}}
+                @livewire('komentar-unassign', ['perjalananId' => $perjalananDetail->id ?? null])
+
             @endif
 
             @if(Auth::user()?->admin)
-                <x-telkominfra.maintenance.show.keluh-pengguna.assign 
+                {{-- <x-telkominfra.maintenance.show.keluh-pengguna.assign 
                     :perjalanan-detail="$perjalananDetail ?? null"  
-                />
+                /> --}}
+                @livewire('komentar-assign', ['perjalananId' => $perjalananDetail->id ?? null])
+
             @endif
 
             @if(Auth::user()?->admin)

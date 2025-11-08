@@ -63,7 +63,7 @@
                 @if ($perjalananDetail->selesai)
                     <i class="fas fa-undo mr-2"></i> Batalkan Selesai
                 @else
-                    <i class="fas fa-check-circle mr-2"></i> Tandai Selesai (Maintenance Berhasil)
+                    <i class="fas fa-check-circle mr-2"></i> Tandai Selesai
                 @endif
             </button>
         </form>

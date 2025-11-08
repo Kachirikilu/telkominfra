@@ -11,7 +11,7 @@
     {{-- @else
         <div class="mx-auto flex-1 pt-24 px-1 sm:px-18 md:px-24 lg:px-32 overflow-y-auto">
     @endif --}}
-      
+
         <x-telkominfra.maintenance.view
             :perjalanans="$perjalanans ?? []"
             :search="$search"
@@ -20,6 +20,7 @@
             :perjalananSelesai="$perjalananSelesai"
             :perjalananBelumSelesai="$perjalananBelumSelesai"
         />
+
      <x-home.footer />
     </div>
 </x-app-layout>

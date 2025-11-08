@@ -1,6 +1,6 @@
 @push('styles')
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    {{-- <link rel="stylesheet" href="{{ secure_asset('css/leaflet/leaflet.css') }}" /> --}}
+    {{-- <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" /> --}}
+    <link rel="stylesheet" href="{{ secure_asset('css/leaflet/leaflet.css') }}" />
 
     <style>
         #map {
@@ -129,8 +129,8 @@
 
 
 @push('scripts')
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    {{-- <script src="{{ secure_asset('js/leaflet/leaflet.js') }}"></script> --}}
+    {{-- <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script> --}}
+    <script src="{{ secure_asset('js/leaflet/leaflet.js') }}"></script>
 
     <script>
         var allMapsData = @json($mapsData ?? []);

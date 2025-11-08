@@ -23,6 +23,8 @@
                 :keluhanDiproses="$keluhanDiproses"
                 :keluhanDiprosesList="$keluhanDiprosesList"
             />
+@livewire('keluhan-table')
+
 
         @elseif (request()->is('keluh-pengguna/create'))
             <x-telkominfra.keluh-pengguna.create />

@@ -21,16 +21,18 @@
         <x-home.welcome-home />
         <x-home.info-home :jadwalHariIni="$jadwalHariIni" :jadwalBelumTerlaksanaCount="$jadwalBelumTerlaksanaCount" :jadwalSudahTerlaksanaCount="$jadwalSudahTerlaksanaCount" :totalJadwalCount="$totalJadwalCount" />
 
-        <x-admin.user
+        @livewire('user-management')
+
+        {{-- <x-admin.user
             :users="$users" 
             :totalUsers="$totalUsers"
             :totalAdmins="$totalAdmins"
             :totalNormalUsers="$totalNormalUsers"
             :search="$search"
             :searchMode="$searchMode"
-        />
+        /> --}}
         {{-- <x-mqtt.camera /> --}}
-        @livewire('data-device.camera')
+        {{-- @livewire('data-device.camera') --}}
 
         @if ($appName == 'Al-Aqobah 1')
             <x-home.galery-home />
