@@ -25,6 +25,33 @@ class AppServiceProvider extends ServiceProvider
         if (env('APP_URL')) {
             URL::forceRootUrl(env('APP_URL'));
         }
+
+if (config('database.default') === 'sqlite') {
+        // Deteksi apakah ini environment Vercel (Linux)
+        $tmpPath = '/tmp/database.sqlite';
+        $localPath = database_path('database.sqlite');
+
+        // Jika di Linux (Vercel)
+        if (PHP_OS_FAMILY !== 'Windows') {
+            if (!file_exists('/tmp')) {
+                mkdir('/tmp');
+            }
+
+            if (!file_exists($tmpPath)) {
+                touch($tmpPath);
+            }
+
+            config(['database.connections.sqlite.database' => $tmpPath]);
+        } 
+        // Jika di lokal (Windows)
+        else {
+            if (!file_exists($localPath)) {
+                touch($localPath);
+            }
+
+            config(['database.connections.sqlite.database' => $localPath]);
+        }
+    }
         // if (env('APP_ENV') !== 'local') {
         //     URL::forceScheme('https');
         // }
