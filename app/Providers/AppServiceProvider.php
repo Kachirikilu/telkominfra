@@ -22,12 +22,18 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        if (env('APP_URL')) {
-            URL::forceRootUrl(env('APP_URL'));
+        // if (env('APP_URL')) {
+        //     URL::forceRootUrl(env('APP_URL'));
+        // }
+        // if (env('APP_ENV') !== 'local') {
+        //     URL::forceScheme('https');
+        // }
+
+        if ($this->app->environment('production')) {
+            \URL::forceScheme('https');
         }
-        if (env('APP_ENV') !== 'local') {
-            URL::forceScheme('https');
-        }
+
+
     //    MqttSubcriberJob::dispatch();
 
         // if (env('APP_ENV') !== 'local' && !env('DEVTUNNEL')) {
