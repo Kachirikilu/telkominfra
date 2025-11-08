@@ -22,6 +22,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+<<<<<<< HEAD
         // if (env('APP_URL')) {
         //     URL::forceRootUrl(env('APP_URL'));
         // }
@@ -34,6 +35,14 @@ class AppServiceProvider extends ServiceProvider
         }
 
 
+=======
+        if (env('APP_URL')) {
+            URL::forceRootUrl(env('APP_URL'));
+        }
+        if (env('APP_ENV') !== 'local') {
+            URL::forceScheme('https');
+        }
+>>>>>>> e99e323cb4debd3b6f60c8116f8e3510c2d02dea
     //    MqttSubcriberJob::dispatch();
 
         // if (env('APP_ENV') !== 'local' && !env('DEVTUNNEL')) {
