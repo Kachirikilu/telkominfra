@@ -56,7 +56,7 @@ Route::middleware([
 if ($appName == 'PT. Telkominfra') {
     
     Route::prefix('maintenance')
-        // ->middleware('is_admin') 
+        ->middleware('is_admin') 
         ->group(function () {
             Route::get('/search', [ViewTelkominfraController::class, 'comentSearch'])->name('maintenance.comentSearch');
             Route::get('/', [ViewTelkominfraController::class, 'index'])->name('maintenance.index');

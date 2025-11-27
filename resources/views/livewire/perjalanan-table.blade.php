@@ -1,5 +1,5 @@
 <div>
-    <div class="mb-6 py-4 bg-white rounded-lg shadow-md border border-gray-100">
+    <div class="p-2 sm:p-4 mb-6 py-4 bg-white rounded-lg shadow-md border border-gray-100">
         {{-- 🔹 TAB FILTER --}}
         <div class="flex border-b mb-4">
             <button wire:click="switchMode('')"
@@ -108,9 +108,11 @@
                 </tbody>
             </table>
 
-            <div class="p-4">
-                {{ $perjalanans->links() }}
-            </div>
+            @if ($perjalanans->hasPages())
+                <div class="p-4">
+                    {{ $perjalanans->links() }}
+                </div>
+            @endif
         </div>
     </div>
 </div>
