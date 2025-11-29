@@ -168,7 +168,7 @@ class ViewTelkominfraController extends Controller
             $centerCoords = [-2.9105859, 104.8536157];
 
             try {
-                $dataSinyal = PengukuranSinyal::where('data_perjalanan_id', $dataItem->id)->lazy(1000);
+                $dataSinyal = PengukuranSinyal::where('data_perjalanan_id', $dataItem->id)->lazy(500);
                 // $nmfPath = public_path('uploads/perjalanan/' . $dataItem->file_nmf);
 
                 if (!empty($nmfPath) && File::exists($nmfPath)) {
