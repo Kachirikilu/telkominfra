@@ -8,9 +8,11 @@
 ])
 
 <div class="bg-white shadow-xl sm:rounded-lg p-2 sm:p-4">
-    <h3 class="text-lg font-semibold mb-4">Daftar Sesi Drive Test</h3>
 
     @if (Auth::user()?->admin)
+
+    <h3 class="text-lg font-semibold mb-4">Daftar Sesi Drive Test</h3>
+
         {{-- ========== FORM UPLOAD DATA BARU ========== --}}
         <div class="mb-6 border p-4 rounded-lg bg-gray-50">
             <h4 class="text-md font-bold mb-3">Unggah Data Perjalanan (NMF) Baru</h4>
