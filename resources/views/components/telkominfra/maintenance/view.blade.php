@@ -24,7 +24,7 @@
                         <label for="nmf_file" class="block text-sm font-medium text-gray-700">
                             File Nemo (.nmf atau .txt log):
                         </label>
-                        <input type="file" id="nmf_file" name="nmf_file[]" accept=".nmf,.txt" multiple required
+                        <input type="file" id="nmf_file" name="nmf_file[]" accept=".nmf,.txt" multiple
                             class="mt-1 block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-white p-2">
                     </div>
 

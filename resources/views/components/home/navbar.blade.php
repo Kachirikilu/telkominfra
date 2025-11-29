@@ -11,6 +11,7 @@
                         <img class="h-12 w-auto" src="/images/masjid/Logo PT PUSRI.png" alt="Logo">
                         <span class="ml-2 text-xl font-bold text-gray-800">{{ $appName }}</span>
                     @elseif ($appName == 'PT. Telkominfra')
+                        {{-- <span class="ml-2 text-xl font-bold text-gray-800">CekSinyal UNSRI by</span> --}}
                         <img class="h-12 w-auto" src="/images/telkominfra/Logo PT Telkominfra.png" alt="Logo">
                     @endif
                 </a>

@@ -21,6 +21,7 @@
                     :keluhanDiproses="$keluhanDiproses"
                     :keluhanDiprosesList="$keluhanDiprosesList"
                 />
+                {{-- @livewire('keluhan-table') --}}
                 {{-- <x-telkominfra.maintenance.view
                     :perjalanans="$perjalanans ?? []"
                     :search="$search"

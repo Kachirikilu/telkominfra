@@ -23,7 +23,7 @@
                 :keluhanDiproses="$keluhanDiproses"
                 :keluhanDiprosesList="$keluhanDiprosesList"
             />
-@livewire('keluhan-table')
+        @livewire('keluhan-table')
 
 
         @elseif (request()->is('keluh-pengguna/create'))

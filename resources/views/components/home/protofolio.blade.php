@@ -62,16 +62,16 @@
                 class="w-full h-full object-cover rounded-md shadow-md">
         </div>
     @elseif ($appName == 'PT. Telkominfra')
-        <h1 class="text-3xl font-bold mb-4">PT. Telkominfra</h1>
+        <h1 class="text-3xl font-bold mb-4">CekSinyal by PT. Telkominfra</h1>
         <p class="text-lg mb-4 text-justify mr-3">
-            Aset ini adalah infrastruktur transmisi kritis yang terletak di Palembang. Berfungsi sebagai pusat
-            operasional jaringan, aset ini mendukung konektivitas data dan telekomunikasi bagi komunitas setempat.
-            Dengan teknologi andal, ia memastikan transmisi bandwidth tinggi serta ketersediaan layanan jaringan yang
-            prima. Keberadaannya esensial untuk mendukung aktivitas digital, bisnis, dan memperkuat inklusi digital bagi
-            seluruh masyarakat di wilayah operasionalnya.
+            Aset ini merupakan infrastruktur transmisi jaringan kritis yang berlokasi strategis di sekitar Universitas
+            Sriwijaya (UNSRI) Palembang dan dikelola oleh PT Telkominfra, berfungsi sebagai pusat operasional yang
+            memastikan konektivitas data dan telekomunikasi berkecepatan tinggi bagi komunitas akademik UNSRI dan
+            masyarakat sekitarnya. Teknologi andal yang digunakan mendukung kebutuhan bandwidth tinggi untuk pendidikan,
+            penelitian, administrasi, serta aktivitas digital masyarakat.
         </p>
         <div class="flex col-span-1 gap-4">
-            <a  href="/keluh-pengguna/create"
+            <a href="/keluh-pengguna/create"
                 class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                 Form Masukkan
             </a>

@@ -116,8 +116,8 @@ class DataTelkominfraController extends Controller
                 'id_perjalanan' => 'nullable|string|max:255',
                 'nama_pengguna' => 'required|string|max:255',
                 'nama_tempat'   => 'required|string|max:255',
-                'nmf_file'      => 'required',
-                'nmf_file.*'    => 'file|mimes:txt,nmf|max:51200',
+                // 'nmf_file'      => 'required',
+                'nmf_file.*'    => 'nullable|file|mimes:txt,nmf|max:51200',
                 'status'        => 'required|in:Before,After',
             ]);
         } catch (ValidationException $e) {
@@ -140,61 +140,63 @@ class DataTelkominfraController extends Controller
             ]
         );
 
-        foreach ($files as $file) {
-            try {
-                $fileExtension = $file->getClientOriginalExtension();
-                $tempUniqueFileName = $idPerjalananStore . '_' . Str::random(6) . '.' . $fileExtension;
-                $file->move($destinationPath, $tempUniqueFileName);
-                $oldPath = $destinationPath . DIRECTORY_SEPARATOR . $tempUniqueFileName;
-
-                $nmfHeaderData = $parser->parseNmfHeader($oldPath);
-                $nmfTimes = $parser->extractNmfTimes($oldPath);
-                $perangkat = $nmfHeaderData['perangkat'] ?? 'Unknown Device';
-
-                // Simpan data perjalanan_data
-                $dataPerjalanan = DataPerjalanan::create([
-                    'perjalanan_id' => $perjalanan->id,
-                    'perangkat' => $perangkat,
-                    'file_nmf' => $tempUniqueFileName,
-                    'status' => $validatedData['status'],
-                    'timestamp_mulai' => $nmfTimes['timestamp_mulai'],
-                    'timestamp_selesai' => $nmfTimes['timestamp_selesai'],
-                ]);
-
-                $finalFileName = $dataPerjalanan->id . '_' . $perjalanan->id_perjalanan . '.' . $fileExtension;
-                $newPath = $destinationPath . DIRECTORY_SEPARATOR . $finalFileName;
-
-                if (File::exists($oldPath)) {
-                    File::move($oldPath, $newPath);
-                    $dataPerjalanan->file_nmf = $finalFileName;
-                    $dataPerjalanan->save();
-                }
-
-                // 🔹 Gunakan LazyCollection untuk parsing file besar
+        if ($files) {
+            foreach ($files as $file) {
                 try {
-                    $lazySignals = $parser->parseNmfSinyal($newPath, $perjalanan->id);
-                    $lazySignals
-                        ->map(function ($item) use ($dataPerjalanan) {
-                            $item['data_perjalanan_id'] = $dataPerjalanan->id;
-                            unset($item['perjalanan_id']);
-                            return $item;
-                        })
-                        ->chunk(1000)
-                        ->each(function ($chunk) use ($finalFileName) {
-                            PengukuranSinyal::insert($chunk->toArray());
-                            Log::info("Menyimpan batch " . count($chunk) . " data sinyal dari: $finalFileName");
-                        });
+                    $fileExtension = $file->getClientOriginalExtension();
+                    $tempUniqueFileName = $idPerjalananStore . '_' . Str::random(6) . '.' . $fileExtension;
+                    $file->move($destinationPath, $tempUniqueFileName);
+                    $oldPath = $destinationPath . DIRECTORY_SEPARATOR . $tempUniqueFileName;
 
-                    Log::info("Berhasil menyimpan data sinyal (lazy) dari file: $finalFileName");
-                } catch (\Exception $signalEx) {
-                    Log::error("Gagal menyimpan data sinyal dari $finalFileName: " . $signalEx->getMessage());
+                    $nmfHeaderData = $parser->parseNmfHeader($oldPath);
+                    $nmfTimes = $parser->extractNmfTimes($oldPath);
+                    $perangkat = $nmfHeaderData['perangkat'] ?? 'Unknown Device';
+
+                    // Simpan data perjalanan_data
+                    $dataPerjalanan = DataPerjalanan::create([
+                        'perjalanan_id' => $perjalanan->id,
+                        'perangkat' => $perangkat,
+                        'file_nmf' => $tempUniqueFileName,
+                        'status' => $validatedData['status'],
+                        'timestamp_mulai' => $nmfTimes['timestamp_mulai'],
+                        'timestamp_selesai' => $nmfTimes['timestamp_selesai'],
+                    ]);
+
+                    $finalFileName = $dataPerjalanan->id . '_' . $perjalanan->id_perjalanan . '.' . $fileExtension;
+                    $newPath = $destinationPath . DIRECTORY_SEPARATOR . $finalFileName;
+
+                    if (File::exists($oldPath)) {
+                        File::move($oldPath, $newPath);
+                        $dataPerjalanan->file_nmf = $finalFileName;
+                        $dataPerjalanan->save();
+                    }
+
+                    // 🔹 Gunakan LazyCollection untuk parsing file besar
+                    try {
+                        $lazySignals = $parser->parseNmfSinyal($newPath, $perjalanan->id);
+                        $lazySignals
+                            ->map(function ($item) use ($dataPerjalanan) {
+                                $item['data_perjalanan_id'] = $dataPerjalanan->id;
+                                unset($item['perjalanan_id']);
+                                return $item;
+                            })
+                            ->chunk(100)
+                            ->each(function ($chunk) use ($finalFileName) {
+                                PengukuranSinyal::insert($chunk->toArray());
+                                Log::info("Menyimpan batch " . count($chunk) . " data sinyal dari: $finalFileName");
+                            });
+
+                        Log::info("Berhasil menyimpan data sinyal (lazy) dari file: $finalFileName");
+                    } catch (\Exception $signalEx) {
+                        Log::error("Gagal menyimpan data sinyal dari $finalFileName: " . $signalEx->getMessage());
+                    }
+                } catch (\Exception $ex) {
+                    Log::error("Gagal memproses file: " . $file->getClientOriginalName(), [
+                        'error' => $ex->getMessage(),
+                        'line' => $ex->getLine(),
+                    ]);
+                    continue;
                 }
-            } catch (\Exception $ex) {
-                Log::error("Gagal memproses file: " . $file->getClientOriginalName(), [
-                    'error' => $ex->getMessage(),
-                    'line' => $ex->getLine(),
-                ]);
-                continue;
             }
         }
 
