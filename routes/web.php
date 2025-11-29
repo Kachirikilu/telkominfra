@@ -59,9 +59,9 @@ if ($appName == 'PT. Telkominfra') {
         ->middleware('is_admin') 
         ->group(function () {
             Route::get('/search', [ViewTelkominfraController::class, 'comentSearch'])->name('maintenance.comentSearch');
-            Route::get('/{id}', [ViewTelkominfraController::class, 'show'])->name('maintenance.show');
         });
 
+    Route::get('/maintenance/{id}', [ViewTelkominfraController::class, 'show'])->name('maintenance.show');
     Route::get('/maintenance', [ViewTelkominfraController::class, 'index'])->name('maintenance.index');
     
     Route::prefix('perjalanan')->group(function () {
