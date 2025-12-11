@@ -6,6 +6,9 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\KeluhPengguna; // Sesuaikan dengan model Anda
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log; // Tambahkan Log untuk debugging/logging
+use Illuminate\Support\Facades\File;
+
 
 class KeluhanTable extends Component
 {
@@ -19,9 +22,13 @@ class KeluhanTable extends Component
     public $isAdmin;
     public $idUser;
 
-    protected $queryString = ['search' => ['except' => ''], 'mode'];
+    // --- PROPERTI BARU UNTUK DELETE POP-UP ---
+    public $showDeleteConfirmation = false;
+    public $keluhanIdToDelete = null;
+    public $keluhanNamaToDelete = ''; // Digunakan untuk menampilkan konteks keluhan
+    // ------------------------------------------
 
-    // Update Livewire pagination theme (opsional, jika Anda menggunakan Tailwind)
+    protected $queryString = ['search' => ['except' => ''], 'mode'];
     protected $paginationTheme = 'tailwind'; 
 
     public function mount()
@@ -31,6 +38,8 @@ class KeluhanTable extends Component
         $this->idUser = Auth::check() ? (Auth::user()->id ?? null) : null;
     }
     
+    // ... (Metode switchMode dan updatingSearch tetap sama)
+
     // Method ini dipanggil saat salah satu tab diklik
     public function switchMode($newMode)
     {
@@ -40,98 +49,156 @@ class KeluhanTable extends Component
         }
 
         $this->mode = $newMode;
-        $this->search = ''; // Kosongkan pencarian saat berganti mode
-        $this->resetPage(); // Reset halaman pagination
+        $this->search = ''; 
+        $this->resetPage(); 
     }
 
     // Method ini dipanggil saat properti 'search' di-update
     public function updatingSearch()
     {
-        $this->resetPage(); // Reset halaman pagination saat mulai mengetik
+        $this->resetPage(); 
     }
     
-    // Logic untuk mengambil data
+    // --- METHOD BARU: CONFIRM DELETE ---
+    public function confirmDelete($keluhanId)
+    {
+        $keluhan = KeluhPengguna::findOrFail($keluhanId);
+
+        // Otorisasi: Hanya admin atau pemilik keluhan yang bisa menghapus
+        if (!$this->isAdmin && $keluhan->user_id != $this->idUser) {
+            session()->flash('error', 'Anda tidak memiliki izin untuk menghapus keluhan ini.');
+            return;
+        }
+        
+        $this->keluhanIdToDelete = $keluhanId;
+        // Gunakan komentar atau nama tempat sebagai konteks di modal
+        $this->keluhanNamaToDelete = substr($keluhan->komentar, 0, 50) . '...'; 
+        $this->showDeleteConfirmation = true;
+    }
+
+    // --- METHOD BARU: BATALKAN DELETE ---
+    public function cancelDelete()
+    {
+        $this->keluhanIdToDelete = null;
+        $this->keluhanNamaToDelete = '';
+        $this->showDeleteConfirmation = false;
+    }
+
+    // --- METHOD BARU: EKSEKUSI DELETE ---
+    public function deleteKeluhan()
+    {
+        $id = $this->keluhanIdToDelete;
+
+        // Guard: Pastikan ID ada
+        if (is_null($id)) {
+            $this->cancelDelete();
+            return;
+        }
+        
+        try {
+            $keluhan = KeluhPengguna::findOrFail($id);
+
+            // Otorisasi Final: Cek lagi di sini sebelum eksekusi
+            if (!$this->isAdmin && $keluhan->user_id != $this->idUser) {
+                session()->flash('error', 'Akses ditolak: Anda tidak memiliki izin untuk menghapus keluhan ini.');
+                $this->cancelDelete();
+                return;
+            }
+
+            // --- LOGIKA HAPUS GAMBAR BARU ---
+            $fileName = $keluhan->foto;
+            $filePath = public_path('images/keluh/' . $fileName); // Sesuaikan path
+
+            if ($fileName && File::exists($filePath)) {
+                File::delete($filePath);
+                Log::info('Livewire: File gambar keluhan dihapus: ' . $fileName);
+            }
+            // ------------------------------------
+            
+            $keluhan->delete();
+
+            session()->flash('success', 'Keluhan berhasil dihapus.');
+            
+            $this->cancelDelete(); // Tutup modal konfirmasi
+            $this->resetPage(); // Muat ulang data tabel
+        } catch (\Exception $e) {
+            Log::error('Gagal menghapus keluhan ID: ' . $id . '. Error: ' . $e->getMessage());
+            session()->flash('error', 'Gagal menghapus data. Terjadi kesalahan server.');
+            $this->cancelDelete();
+        }
+    }
+    // ------------------------------------------
+
+    // ... (Metode getKeluhan, render, dan getModeName tetap sama)
     private function getKeluhan()
     {
+        // ... (kode tetap sama)
         $query = KeluhPengguna::query()
-            ->with(['user', 'perjalanan']); // Muat relasi
+            ->with(['user', 'perjalanan']); 
 
         // Filtering berdasarkan mode
         if ($this->mode === 'pending') {
             $query->whereNull('perjalanan_id');
         } elseif ($this->mode === 'processing') {
-            // Perjalanan sedang berlangsung (perjalanan_id ada dan belum selesai)
-            $query->whereNotNull('perjalanan_id')
-                  ->whereHas('perjalanan', function ($q) {
-                      $q->where('selesai', false);
-                  });
+             $query->whereNotNull('perjalanan_id')
+                   ->whereHas('perjalanan', function ($q) {
+                       $q->where('selesai', false);
+                   });
         } elseif ($this->mode === 'complete') {
-            // Sudah selesai (perjalanan_id ada dan sudah selesai)
-            $query->whereNotNull('perjalanan_id')
-                  ->whereHas('perjalanan', function ($q) {
-                      $q->where('selesai', true);
-                  });
+             $query->whereNotNull('perjalanan_id')
+                   ->whereHas('perjalanan', function ($q) {
+                       $q->where('selesai', true);
+                   });
         }
 
         // Filtering berdasarkan pencarian (search)
         if ($this->search) {
             $searchTerm = '%' . $this->search . '%';
             $query->where(function ($q) use ($searchTerm) {
-                // Contoh: Cari di kolom nama_tempat atau komentar
-                $q->where('nama_tempat', 'like', $searchTerm)
-                  ->orWhere('komentar', 'like', $searchTerm)
-                  ->orWhereHas('user', function ($qUser) use ($searchTerm) {
-                      $qUser->where('name', 'like', $searchTerm);
-                  });
+                 $q->where('nama_tempat', 'like', $searchTerm)
+                   ->orWhere('komentar', 'like', $searchTerm)
+                   ->orWhereHas('user', function ($qUser) use ($searchTerm) {
+                       $qUser->where('name', 'like', $searchTerm);
+                   });
             });
         }
         
-        // Sorting
         $query->latest();
-
-        // Menggunakan paginate() untuk hasil
-        return $query->paginate(10); // Sesuaikan jumlah item per halaman
+        return $query->paginate(10);
     }
-
-public function render()
-{
-    // Hitung total keluhan per kategori (pending, processing, complete)
-    $keluhanBelumSelesai = KeluhPengguna::whereNull('perjalanan_id')->count();
-
-    $keluhanDiproses = KeluhPengguna::whereNotNull('perjalanan_id')
-        ->whereHas('perjalanan', function ($q) {
-            $q->where('selesai', false);
-        })
-        ->count();
-
-    $keluhanSelesai = KeluhPengguna::whereNotNull('perjalanan_id')
-        ->whereHas('perjalanan', function ($q) {
-            $q->where('selesai', true);
-        })
-        ->count();
-
-    return view('livewire.keluhan-table', [
-        'keluhans' => $this->getKeluhan(),
-        'modeName' => $this->getModeName(),
-        'keluhanBelumSelesai' => $keluhanBelumSelesai,
-        'keluhanDiproses' => $keluhanDiproses,
-        'keluhanSelesai' => $keluhanSelesai,
-    ]);
-}
-
     
-    // Utility method untuk mendapatkan nama mode
+    // ... (metode render dan getModeName tetap sama)
+    public function render()
+    {
+        // ... (kode tetap sama)
+        $keluhanBelumSelesai = KeluhPengguna::whereNull('perjalanan_id')->count();
+        $keluhanDiproses = KeluhPengguna::whereNotNull('perjalanan_id')
+            ->whereHas('perjalanan', function ($q) {
+                $q->where('selesai', false);
+            })
+            ->count();
+        $keluhanSelesai = KeluhPengguna::whereNotNull('perjalanan_id')
+            ->whereHas('perjalanan', function ($q) {
+                $q->where('selesai', true);
+            })
+            ->count();
+
+        return view('livewire.keluhan-table', [
+            'keluhans' => $this->getKeluhan(),
+            'modeName' => $this->getModeName(),
+            'keluhanBelumSelesai' => $keluhanBelumSelesai,
+            'keluhanDiproses' => $keluhanDiproses,
+            'keluhanSelesai' => $keluhanSelesai,
+        ]);
+    }
+    
     private function getModeName()
     {
         switch ($this->mode) {
-            case 'pending':
-                return 'Belum Diproses';
-            case 'processing':
-                return 'Sedang Diproses';
-            case 'complete':
-                return 'Sudah Selesai';
-            default:
-                return 'Semua';
+            case 'pending': return 'Belum Diproses';
+            case 'processing': return 'Sedang Diproses';
+            case 'complete': return 'Sudah Selesai';
+            default: return 'Semua';
         }
     }
 }

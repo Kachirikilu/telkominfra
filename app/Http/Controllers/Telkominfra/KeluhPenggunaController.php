@@ -170,6 +170,16 @@ class KeluhPenggunaController extends Controller
     public function destroy($id)
     {
         $keluh = KeluhPengguna::findOrFail($id);
+
+        // --- LOGIKA HAPUS GAMBAR BARU ---
+        $fileName = $keluh->foto;
+        $filePath = public_path('images/keluh/' . $fileName); // Sesuaikan path
+
+        if ($fileName && File::exists($filePath)) {
+            File::delete($filePath);
+        }
+        // ------------------------------------
+
         $keluh->delete();
 
         return redirect()->route('keluh_pengguna.index')->with('success', 'Keluhan berhasil dihapus.');

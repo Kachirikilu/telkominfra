@@ -39,12 +39,12 @@
 
     {{-- 🔹 TABEL DATA --}}
     <div class="bg-white shadow-lg rounded-lg overflow-hidden">
-        <div wire:loading.flex class="p-6 justify-center text-gray-500">
+        {{-- <div wire:loading.flex class="p-6 justify-center text-gray-500">
             <i class="fas fa-spinner fa-spin mr-2"></i> Memuat data...
-        </div>
+        </div> --}}
 
-        <div wire:loading.remove class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
+        <div class="overflow-x-auto">
+            <table wire:loading.class="opacity-50" class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
@@ -86,15 +86,11 @@
 
                             @if ($isAdmin)
                                 <td class="px-6 py-4 text-center">
-                                    <form action="{{ route('perjalanan.destroy', $perjalanan->id) }}" method="POST"
-                                        onsubmit="return confirm('Apakah Anda yakin ingin menghapus data ini?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit"
-                                            class="bg-red-500 hover:bg-red-700 text-white font-bold py-1.5 px-3 rounded text-xs uppercase transition">
-                                            Hapus
-                                        </button>
-                                    </form>
+                                    {{-- TOMBOL HAPUS BARU MENGGUNAKAN LIVEWIRE --}}
+                                    <button wire:click="confirmDelete({{ $perjalanan->id }})"
+                                        class="bg-red-500 hover:bg-red-700 text-white font-bold py-1.5 px-3 rounded text-xs uppercase transition">
+                                        Hapus
+                                    </button>
                                 </td>
                             @endif
                         </tr>
@@ -113,6 +109,47 @@
                     {{ $perjalanans->links() }}
                 </div>
             @endif
+
+            <div wire:loading.flex class="justify-center items-center py-4">
+                <div class="flex items-center space-x-2 text-gray-500">
+                    <svg class="animate-spin h-5 w-5 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                            stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                    </svg>
+                    <span>Memuat data...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div x-show="$wire.showDeleteConfirmation" x-transition.opacity.duration.200ms x-cloak
+        class="fixed inset-0 bg-gray-900 bg-opacity-40 flex justify-center items-center z-50">
+        <div @click.outside="$wire.cancelDelete()"
+            class="bg-white rounded-lg p-6 w-full max-w-sm transform transition-all duration-200 ease-out scale-100">
+
+            {{-- Header --}}
+            <h3 class="text-xl font-bold mb-2 text-red-600">Konfirmasi Hapus Data Perjalanan</h3>
+
+            {{-- Body Pesan (Menggunakan properti Livewire) --}}
+            <p class="text-gray-700 mb-6">
+                Apakah Anda yakin ingin menghapus data perjalanan ke **{{ $perjalananNamaToDelete }}**?
+                Tindakan ini tidak dapat dibatalkan.
+            </p>
+
+            {{-- Tombol Aksi --}}
+            <div class="flex justify-end space-x-3">
+                <button wire:click="cancelDelete"
+                    class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg font-medium transition duration-150">
+                    Batal
+                </button>
+                {{-- Panggil deletePerjalanan saat konfirmasi --}}
+                <button wire:click="deletePerjalanan"
+                    class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition duration-150">
+                    Ya, Hapus
+                </button>
+            </div>
         </div>
     </div>
 </div>

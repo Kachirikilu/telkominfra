@@ -41,10 +41,18 @@
                 <x-input id="password_confirmation" class="block mt-1 w-full" type="password" name="password_confirmation" required autocomplete="new-password" />
             </div>
 
-            <div class="mt-4">
-                <x-label for="admin_key" value="{{ __('Admin Key') }}" />
-                <x-input id="admin_key" class="block mt-1 w-full" type="password" name="admin_key" autocomplete="new-password" />
-            </div>
+            @if ($adminCount == 0)
+                <div class="mt-4">
+                    <x-label for="admin_key" value="{{ __('Admin Key') }}" />
+                    {{-- Asumsi 'x-input' adalah komponen Blade --}}
+                    <x-input id="admin_key" class="block mt-1 w-full" type="password" name="admin_key" autocomplete="new-password" />
+                    
+                    {{-- Opsional: Tambahkan pesan jika ini adalah admin pertama --}}
+                    <p class="text-sm text-yellow-600 mt-2">
+                        ⚠️ Input ini hanya muncul karena ini adalah pendaftaran administrator pertama.
+                    </p>
+                </div>
+            @endif
 
             @if (Laravel\Jetstream\Jetstream::hasTermsAndPrivacyPolicyFeature())
                 <div class="mt-4">
