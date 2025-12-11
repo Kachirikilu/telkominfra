@@ -180,7 +180,7 @@ class DataTelkominfraController extends Controller
                                 unset($item['perjalanan_id']);
                                 return $item;
                             })
-                            ->chunk(100)
+                            ->chunk(50)
                             ->each(function ($chunk) use ($finalFileName) {
                                 PengukuranSinyal::insert($chunk->toArray());
                                 Log::info("Menyimpan batch " . count($chunk) . " data sinyal dari: $finalFileName");
