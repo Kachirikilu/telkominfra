@@ -3,7 +3,14 @@
 @endphp
 
 <div
-    class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 {{ request()->is('dashboard') ? 'lg:grid-cols-3' : 'lg:grid-cols-4' }} xl:grid-cols-4 gap-3 mx-2 sm:mx-0 mb-6">
+    class="
+        grid grid-cols-2 gap-3 mx-2 sm:mx-0 mb-6
+        @if ($appName == 'Al-Aqobah 1') sm:grid-cols-3
+            md:grid-cols-4
+            {{ request()->is('dashboard') ? 'lg:grid-cols-3' : 'lg:grid-cols-4' }}
+            xl:grid-cols-4 @endif
+    ">
+
     @if ($appName == 'Al-Aqobah 1')
 
         <a href="#jadwal-hari-ini" id="scroll-ke-hari-ini"
