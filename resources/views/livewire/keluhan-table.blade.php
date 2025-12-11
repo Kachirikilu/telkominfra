@@ -13,6 +13,7 @@
         {{-- ===================== TABS FILTER MODE ===================== --}}
         <div class="flex border-b mb-4 overflow-x-auto">
             @foreach ([
+        'myComment' => ['icon' => 'fa-hourglass-half', 'label' => 'Komentar Saya', 'count' => $keluhanSaya ?? 0],
         'pending' => ['icon' => 'fa-hourglass-half', 'label' => 'Belum', 'count' => $keluhanBelumSelesai ?? 0],
         'processing' => ['icon' => 'fa-tools', 'label' => 'Sedang Diproses', 'count' => $keluhanDiproses ?? 0],
         'complete' => ['icon' => 'fa-check-double', 'label' => 'Sudah Selesai', 'count' => $keluhanSelesai ?? 0],
@@ -23,7 +24,16 @@
                             ? 'border-indigo-500 text-indigo-700'
                             : 'border-transparent text-gray-500 hover:text-indigo-700 hover:border-gray-300' }}">
                     <i class="fas {{ $data['icon'] }} mr-2"></i>
-                    {{ $data['label'] }} ({{ $data['count'] }})
+                    @auth
+                        {{ $data['label'] }}
+                    @else
+                        @if ($data['label'] == 'Komentar Saya')
+                            Semua Komentar
+                        @else
+                            {{ $data['label'] }}
+                        @endif
+                    @endauth
+                    ({{ $data['count'] }})
                 </button>
             @endforeach
         </div>
@@ -107,7 +117,7 @@
                                                     Peta
                                                 </a>
                                             @endif
-                                            @if ($isAdmin || $item->user_id == $idUser)
+                                            @if ($isAdmin || (!is_null($idUser) && $item->user_id == $idUser))
                                                 {{-- Tombol Hapus Livewire --}}
                                                 <button wire:click="confirmDelete({{ $item->id }})"
                                                     class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-1.5 px-3 rounded text-xs uppercase transition duration-150 flex-1">
@@ -135,17 +145,17 @@
             </div>
         @endif
 
-                 <div wire:loading.flex class="justify-center items-center py-4">
-                <div class="flex items-center space-x-2 text-gray-500">
-                    <svg class="animate-spin h-5 w-5 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none"
-                        viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                            stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-                    </svg>
-                    <span>Memuat data...</span>
-                </div>
+        <div wire:loading.flex class="justify-center items-center py-4">
+            <div class="flex items-center space-x-2 text-gray-500">
+                <svg class="animate-spin h-5 w-5 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none"
+                    viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                        stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                </svg>
+                <span>Memuat data...</span>
             </div>
+        </div>
     </div>
 
     <div x-show="$wire.showDeleteConfirmation" x-transition.opacity.duration.200ms x-cloak

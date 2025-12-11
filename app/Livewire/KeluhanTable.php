@@ -16,7 +16,7 @@ class KeluhanTable extends Component
 
     // State properties
     public $search = '';
-    public $mode = 'pending'; // Default mode: 'pending', 'processing', 'complete'
+    public $mode = 'pending'; // Default mode: 'pending', 'processing', 'complete', 'myComment'
 
     // Properti yang akan digunakan di view
     public $isAdmin;
@@ -43,7 +43,7 @@ class KeluhanTable extends Component
     // Method ini dipanggil saat salah satu tab diklik
     public function switchMode($newMode)
     {
-        $validModes = ['pending', 'processing', 'complete'];
+        $validModes = ['myComment', 'pending', 'processing', 'complete'];
         if (!in_array($newMode, $validModes)) {
             return;
         }
@@ -63,15 +63,14 @@ class KeluhanTable extends Component
     public function confirmDelete($keluhanId)
     {
         $keluhan = KeluhPengguna::findOrFail($keluhanId);
+        $isAuthorized = $this->isAdmin || (!is_null($this->idUser) && $keluhan->user_id == $this->idUser);
 
-        // Otorisasi: Hanya admin atau pemilik keluhan yang bisa menghapus
-        if (!$this->isAdmin && $keluhan->user_id != $this->idUser) {
+        if (!$isAuthorized) {
             session()->flash('error', 'Anda tidak memiliki izin untuk menghapus keluhan ini.');
             return;
         }
         
         $this->keluhanIdToDelete = $keluhanId;
-        // Gunakan komentar atau nama tempat sebagai konteks di modal
         $this->keluhanNamaToDelete = substr($keluhan->komentar, 0, 50) . '...'; 
         $this->showDeleteConfirmation = true;
     }
@@ -149,6 +148,8 @@ class KeluhanTable extends Component
                    ->whereHas('perjalanan', function ($q) {
                        $q->where('selesai', true);
                    });
+        } elseif ($this->mode === 'myComment') {
+            $query->where('user_id', $this->idUser);
         }
 
         // Filtering berdasarkan pencarian (search)
@@ -170,7 +171,7 @@ class KeluhanTable extends Component
     // ... (metode render dan getModeName tetap sama)
     public function render()
     {
-        // ... (kode tetap sama)
+        $keluhanSaya = KeluhPengguna::where('user_id', $this->idUser)->count();
         $keluhanBelumSelesai = KeluhPengguna::whereNull('perjalanan_id')->count();
         $keluhanDiproses = KeluhPengguna::whereNotNull('perjalanan_id')
             ->whereHas('perjalanan', function ($q) {
@@ -186,6 +187,7 @@ class KeluhanTable extends Component
         return view('livewire.keluhan-table', [
             'keluhans' => $this->getKeluhan(),
             'modeName' => $this->getModeName(),
+            'keluhanSaya' => $keluhanSaya,
             'keluhanBelumSelesai' => $keluhanBelumSelesai,
             'keluhanDiproses' => $keluhanDiproses,
             'keluhanSelesai' => $keluhanSelesai,
@@ -195,6 +197,7 @@ class KeluhanTable extends Component
     private function getModeName()
     {
         switch ($this->mode) {
+            case 'myComment': return 'Komentar Saya';
             case 'pending': return 'Belum Diproses';
             case 'processing': return 'Sedang Diproses';
             case 'complete': return 'Sudah Selesai';
