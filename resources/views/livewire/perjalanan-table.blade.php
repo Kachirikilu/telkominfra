@@ -134,7 +134,7 @@
 
             {{-- Body Pesan (Menggunakan properti Livewire) --}}
             <p class="text-gray-700 mb-6">
-                Apakah Anda yakin ingin menghapus data perjalanan ke **{{ $perjalananNamaToDelete }}**?
+                Apakah Anda yakin ingin menghapus data perjalanan **{{ $perjalananNamaToDelete }}** dengan ID **{{ $perjalananIdPerjalananToDelete }}**?
                 Tindakan ini tidak dapat dibatalkan.
             </p>
 

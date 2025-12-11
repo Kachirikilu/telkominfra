@@ -168,7 +168,7 @@
 
             {{-- Body Pesan (Menggunakan properti Livewire) --}}
             <p class="text-gray-700 mb-6">
-                Apakah Anda yakin ingin menghapus keluhan: **{{ $keluhanNamaToDelete }}**?
+                Apakah Anda yakin ingin menghapus keluhan **{{ $keluhanNamaToDelete }}**?
                 Tindakan ini tidak dapat dibatalkan.
             </p>
 

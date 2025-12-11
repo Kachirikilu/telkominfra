@@ -22,6 +22,7 @@ class PerjalananTable extends Component
     // --- PROPERTI BARU UNTUK DELETE POP-UP ---
     public $showDeleteConfirmation = false;
     public $perjalananIdToDelete = null;
+    public $perjalananIdPerjalananToDelete = '';
     public $perjalananNamaToDelete = '';
     // ------------------------------------------
 
@@ -51,6 +52,7 @@ class PerjalananTable extends Component
 
         $this->perjalananIdToDelete = $perjalananId;
         // Asumsi 'nama_tempat' adalah nama yang ingin ditampilkan
+        $this->perjalananIdPerjalananToDelete = $perjalanan->id_perjalanan;
         $this->perjalananNamaToDelete = $perjalanan->nama_tempat; 
         $this->showDeleteConfirmation = true;
     }
@@ -59,7 +61,8 @@ class PerjalananTable extends Component
     public function cancelDelete()
     {
         $this->perjalananIdToDelete = null;
-        $this->perjalananNamaToDelete = '';
+        $this->perjalananIdPerjalananToDelete = '';
+        $this->perjalananIdPerjalananToDelete = '';
         $this->showDeleteConfirmation = false;
     }
 
@@ -102,7 +105,7 @@ class PerjalananTable extends Component
                 $perjalanan->delete();
             });
 
-            session()->flash('success', 'Data perjalanan "' . $this->perjalananNamaToDelete . '" beserta semua file log berhasil dihapus.');
+            session()->flash('success', 'Data perjalanan "' . $this->perjalananIdPerjalananToDelete . '" beserta semua file log berhasil dihapus.');
 
             $this->cancelDelete(); 
             $this->resetPage();  // optional jika pakai pagination
