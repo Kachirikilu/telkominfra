@@ -39,11 +39,11 @@
                     {{ $searchMode == 'admin' ? 'border-indigo-500 text-indigo-700' : 'border-transparent text-gray-500 hover:text-indigo-700' }}">
                     <i class="fas fa-crown mr-2"></i> Admin (<span>{{ number_format($totalAdmins) }}</span>)
                 </button>
-                {{-- Tab User Biasa --}}
+                {{-- Tab User --}}
                 <button wire:click="setMode('user')"
                     class="tab-mode px-4 py-2 text-sm font-medium rounded-t-lg transition duration-150 border-b-2 
                     {{ $searchMode == 'user' ? 'border-indigo-500 text-indigo-700' : 'border-transparent text-gray-500 hover:text-indigo-700' }}">
-                    <i class="fas fa-user mr-2"></i> User Biasa (<span>{{ number_format($totalNormalUsers) }}</span>)
+                    <i class="fas fa-user mr-2"></i> User (<span>{{ number_format($totalNormalUsers) }}</span>)
                 </button>
             </div>
 
@@ -116,20 +116,22 @@
                                             Hapus
                                         </button>
                                     @endif --}}
-                                    @if (Auth::user()?->admin)
-                                        <button wire:click="editUser({{ $user->id }})"
-                                            class="bg-yellow-400 hover:bg-yellow-500 text-white px-3 py-1 rounded">
-                                            Edit
-                                        </button>
-
-                                        @if (Auth::id() !== $user->id)
-                                            {{-- TOMBOL DELETE BARU --}}
-                                            <button wire:click="confirmDelete({{ $user->id }})"
-                                                class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded">
-                                                Hapus
+                                    <div class="flex items-center justify-center space-x-2">
+                                        @if (Auth::user()?->admin)
+                                            <button wire:click="editUser({{ $user->id }})"
+                                                class="bg-yellow-400 hover:bg-yellow-500 text-white px-3 py-1 rounded">
+                                                Edit
                                             </button>
+
+                                            @if (Auth::id() !== $user->id)
+                                                {{-- TOMBOL DELETE BARU --}}
+                                                <button wire:click="confirmDelete({{ $user->id }})"
+                                                    class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded">
+                                                    Hapus
+                                                </button>
+                                            @endif
                                         @endif
-                                    @endif
+                                    </div
                                 </td>
                             </tr>
                         @empty
@@ -241,7 +243,7 @@
                                 <div>
                                     <p class="text-sm font-medium text-gray-700">Role Pengguna:</p>
                                     <p class="text-base font-semibold text-indigo-600">
-                                        {{ $is_admin ? 'Admin' : 'User Biasa' }}
+                                        {{ $is_admin ? 'Admin' : 'User' }}
                                     </p>
                                 </div>
 

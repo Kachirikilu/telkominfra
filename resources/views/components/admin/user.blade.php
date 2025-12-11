@@ -19,11 +19,11 @@
                     <i class="fas fa-crown mr-2"></i> Admin (<span
                         id="count-admin">{{ number_format($totalAdmins) }}</span>)
                 </button>
-                {{-- Tab User Biasa --}}
+                {{-- Tab User --}}
                 <button id="mode-user" data-mode="user"
                     class="tab-mode px-4 py-2 text-sm font-medium rounded-t-lg transition duration-150 border-b-2 
                     {{ isset($searchMode) && $searchMode == 'user' ? 'border-indigo-500 text-indigo-700' : 'border-transparent text-gray-500 hover:text-indigo-700' }}">
-                    <i class="fas fa-user mr-2"></i> User Biasa (<span
+                    <i class="fas fa-user mr-2"></i> User (<span
                         id="count-user">{{ number_format($totalNormalUsers) }}</span>)
                 </button>
             </div>
@@ -146,7 +146,7 @@
 
         const roleSpan = user.admin ?
             '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Admin</span>' :
-            '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">User Biasa</span>';
+            '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">User</span>';
 
         const deleteButtonHtml = buildDeleteButton(user);
 
