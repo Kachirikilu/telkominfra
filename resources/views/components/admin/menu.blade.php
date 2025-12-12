@@ -64,7 +64,7 @@
         <li>
             <a href="{{ route('profile.show') }}"
                 class="{{ request()->is('user/profile') ? 'bg-blue-500 text-white hover:bg-blue-600' : 'hover:bg-gray-700' }}
-              block py-2 px-4 rounded truncate max-w-[14rem]"
+              block py-2 px-4 rounded truncate w-full"
                 title="{{ request()->is('user/profile') ? 'Profil' : Auth::user()->name ?? 'Pengunjung' }}">
 
                 {{ request()->is('user/profile') ? 'User Profil' : Auth::user()->name ?? 'Pengunjung' }}
@@ -159,7 +159,7 @@
                 <li>
                     <a href="{{ route('profile.show') }}"
                         class="{{ request()->is('user/profile') ? 'bg-blue-500 text-white hover:bg-blue-600' : 'hover:bg-gray-100' }}
-              block py-2 px-4 rounded truncate max-w-[14rem]"
+              block py-2 px-4 rounded truncate w-full"
                         title="{{ request()->is('user/profile') ? 'User Profil' : Auth::user()->name ?? 'Pengunjung' }}">
 
                         {{ request()->is('user/profile') ? 'User Profil' : Auth::user()->name ?? 'Pengunjung' }}
