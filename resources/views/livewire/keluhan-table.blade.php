@@ -93,7 +93,7 @@
                                 <tr class="hover:bg-gray-50">
                                     <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ $item->id }}</td>
                                     <td class="px-6 py-4 text-sm text-gray-700">
-                                        {{ $item->user->name ?? ($item->nama_pengguna ?? '-') }}</td>
+                                        {{ $item->nama_pengguna ?? '-' }}</td>
                                     <td class="px-6 py-4 text-sm text-gray-700">{{ $item->nama_tempat ?? '-' }}</td>
                                     <td class="px-6 py-4 text-sm">
                                         <span
