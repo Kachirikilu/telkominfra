@@ -38,7 +38,7 @@
             <!-- Page Content -->
             <main>
 
-                <div class="lg:flex h-screen overflow-auto">
+                <div class="lg:flex h-screen overflow-auto justify-center">
                     {{ $slot }}
                 </div>
 
